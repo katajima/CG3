@@ -1,7 +1,8 @@
-#include"Object3d.hlsli"
+#include"Particle.hlsli"
 
 //色など三角形の表面の材質を決定するものMaterial
-struct Material {
+struct Material
+{
     
     float32_t4 color;
     int32_t enableLighting;
@@ -16,7 +17,7 @@ struct DirectionalLight
 };
 
 ConstantBuffer<Material> gMaterial : register(b0);
-ConstantBuffer<DirectionalLight> gDirectionalLight: register(b1);
+ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState sSampler : register(s0);
 

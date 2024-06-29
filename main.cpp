@@ -12,6 +12,7 @@
 #include<sstream>
 #include<wrl.h>
 #include<random>
+#include<numbers>
 
 #include"externals/DirectXTex/DirectXTex.h"
 #include"externals/DirectXTex/d3dx12.h"
@@ -105,7 +106,7 @@ struct  D3DResourceLeakchecker {
 	}
 };
 
-Particle MakeNewParticle(std::mt19937& randomEngine) 
+Particle MakeNewParticle(std::mt19937& randomEngine)
 {
 	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
@@ -1094,8 +1095,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	const uint32_t kNumMaxInstance = 10;
 
-	Microsoft::WRL::ComPtr < ID3D12Resource> instancingResource = 
-	CreateBufferResource(device, sizeof(ParticleForGPU) * kNumMaxInstance);
+	Microsoft::WRL::ComPtr < ID3D12Resource> instancingResource =
+		CreateBufferResource(device, sizeof(ParticleForGPU) * kNumMaxInstance);
 
 	//データを書き込む
 	ParticleForGPU* instancingData = nullptr;
@@ -1147,7 +1148,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	instancingSrvDesc.Buffer.StructureByteStride = sizeof(ParticleForGPU);
 	D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
 	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
-	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc,instancingSrvHandleCPU);
+	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
 
 	////------ViewportとScissor(シザー)------////
 
@@ -1262,13 +1263,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // Format。基本的にはResourceに合わせる
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D; // 2dTexture
-	
+
 
 	// DSVHeapの先頭にDSVを作る
 	device->CreateDepthStencilView(depthStencilResource.Get(), &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 
-/////変数たち
+	/////変数たち
 
 	std::random_device seedGenerator;
 	std::mt19937 randomEngine(seedGenerator());
@@ -1282,7 +1283,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		instancingData[index].color = particle[index].color;
 	}
 	//カメラ
-	Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-10.0f} };
+	Transform cameraTransform{
+		{1.0f,1.0f,1.0f},
+		{std::numbers::pi_v<float> / 3.0f,std::numbers::pi_v<float>,0.0f},
+		{0.0f,23.0f,10.0f} 
+	};
+	//cameraTransform.rotate = { 0.0f,0.0f,0.0f };
+	//cameraTransform.translate = { 0.0f,0.0f,-10.0f };
 
 	// CPUで動かす用のTransformを作る
 
@@ -1298,9 +1305,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 
 
+
+
 	//
 	bool useMonsterBall = true;
-
+	bool usebillboard = false;
+	bool upData = false;
 	// 
 	const float kDeltaTime = 1.0f / 60.0f;
 	//
@@ -1337,23 +1347,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 			//transform.rotate.y += 0.006f;
-			
+
 
 			ImGui::Begin("Window");
-			//ImGui::DragFloat3("translate", &transform.translate.x);
-			//ImGui::DragFloat3("rotate", &transform.rotate.x);
 			ImGui::DragFloat3("camera.translate.x", &cameraTransform.translate.x, 0.1f);
-			//ImGui::DragFloat3("camera.rotate", &cameraTransform.rotate.x, 0.1f);
 			ImGui::SliderFloat3("camera.rotate", &cameraTransform.rotate.x, -3.14f, 3.14f);
-			ImGui::Checkbox("useMonsterBoll", &useMonsterBall);
-			///ImGui::Checkbox("useenableLighting", materialData->enableLighting);
+			//ImGui::Checkbox("useMonsterBoll", &useMonsterBall);
+			ImGui::Checkbox("usebillboard", &usebillboard);
+			ImGui::Checkbox("upData", &upData);
 			ImGui::DragInt("enableLighting", &materialDataObj->enableLighting);
 			ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
 			ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
 			directionalLightData->direction = Nomalize(directionalLightData->direction);
 			ImGui::ColorEdit4("color", &materialDataObj->color.x);
-			ImGui::End();
-			ImGui::Begin("UV");
 			ImGui::DragFloat2("UVTranslate", &uvTransformObj.translate.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat2("UVSScale", &uvTransformObj.scale.x, 0.1f, -10.0f, 10.0f);
 			ImGui::SliderAngle("UVRotate", &uvTransformObj.rotate.z);
@@ -1364,24 +1370,37 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			////透視射影行列
 			projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 
+			Matrix4x4 backToFrontMatrix = MakeRotateYMatrix(std::numbers::pi_v<float>);
+			Matrix4x4 billboardMatrix = Multiply(backToFrontMatrix, cameraMatrix);
+			billboardMatrix.m[3][0] = 0.0f; //平行移動成分はいらない
+			billboardMatrix.m[3][1] = 0.0f;
+			billboardMatrix.m[3][2] = 0.0f;
+
+
 			uint32_t numInstance = 0;//描画すべきインスタンス
 			for (uint32_t i = 0; i < kNumMaxInstance; ++i) {
 				if (particle[i].lifeTime <= particle[i].currentTime) {
 					continue;
 				}
-				particle[i].transform.rotate.y = 3.14f;
+				//particle[i].transform.rotate.y = 3.14f;
+				if (upData) {
+					//速度を加算
+					particle[i].transform.translate = Add(particle[i].transform.translate, Multiply(kDeltaTime, particle[i].velocity));
 
-				//速度を加算
-				particle[i].transform.translate = Add(particle[i].transform.translate, Multiply(kDeltaTime, particle[i].velocity));
-				
-				//タイム
-				particle[i].currentTime += kDeltaTime;
-
+					//タイム
+					particle[i].currentTime += kDeltaTime;
+				}
 				//α値
-				float alpha = 1.0f - (particle[i].currentTime/particle[i].lifeTime);
+				float alpha = 1.0f - (particle[i].currentTime / particle[i].lifeTime);
 
-				Matrix4x4 worldMatrixObj = MakeAffineMatrixMatrix(particle[i].transform.scale, particle[i].transform.rotate, particle[i].transform.translate);
-				Matrix4x4 worldViewProjectionMatrixObj = Multiply(worldMatrixObj, Multiply(viewMatrix, projectionMatrix));
+				Matrix4x4 worldMatrix;
+				if (usebillboard) {
+					worldMatrix = Multiply(Multiply(MakeScaleMatrix(particle[i].transform.scale),billboardMatrix),MakeTranslateMatrix(particle[i].transform.translate));
+				}
+				else {
+					worldMatrix = MakeAffineMatrixMatrix(particle[i].transform.scale, particle[i].transform.rotate, particle[i].transform.translate);
+				}
+				Matrix4x4 worldViewProjectionMatrixObj = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 				instancingData[numInstance].World = worldViewProjectionMatrixObj;
 				instancingData[numInstance].WVP = worldViewProjectionMatrixObj;
 				instancingData[numInstance].color = particle[i].color;
@@ -1481,7 +1500,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-			
+
 			// パラメータ[2]はディスクリプタテーブルとして設定
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
 

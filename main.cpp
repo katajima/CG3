@@ -42,6 +42,8 @@ struct Transform {
 	Vector3 translate;
 };
 
+
+
 struct Particle
 {
 	Transform transform;
@@ -58,6 +60,12 @@ struct Emitter {
 	float frequency;		// < 発生頻度
 	float frequencyTime;	// < 頻度用時刻
 };
+
+struct AcceleraionField {
+	Vector3 acceleration;
+	AABB area;
+};
+
 
 struct VertexData {
 
@@ -1308,6 +1316,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	emitter.transform.scale = { 1.0f,1.0f,1.0f };
 
 
+	AcceleraionField acceleraionField;
+	acceleraionField.acceleration = { 15.0f,0.0f,0.0f };
+	acceleraionField.area.min = { -1.0f,-1.0f,-1.0f };
+	acceleraionField.area.max = { 1.0f,1.0f,1.0f };
 
 	//カメラ
 	Transform cameraTransform{
@@ -1338,6 +1350,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	bool useMonsterBall = true;
 	bool usebillboard = true;
 	bool upData = true;
+	bool upDataWind = false;
 	//bool addParticle = false;
 	// 
 	const float kDeltaTime = 1.0f / 60.0f;
@@ -1383,6 +1396,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			ImGui::Checkbox("usebillboard", &usebillboard);
 			ImGui::Checkbox("upData", &upData);
+			ImGui::Checkbox("upDataWind", &upDataWind);
 			ImGui::DragInt("enableLighting", &materialDataObj->enableLighting);
 			ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
 			ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
@@ -1422,8 +1436,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				}
 				if(numInstance < kNumMaxInstance){
 				if (upData) {
-					
+					if (upDataWind) {
+						if (IsCollision(acceleraionField.area, (*particleIterator).transform.translate)) {
 
+							(*particleIterator).velocity = Add((*particleIterator).velocity, Multiply(kDeltaTime, acceleraionField.acceleration));
+
+						}
+					}
 					//速度を加算
 					(*particleIterator).transform.translate = Add((*particleIterator).transform.translate, Multiply(kDeltaTime, (*particleIterator).velocity));
 

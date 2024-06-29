@@ -29,7 +29,11 @@ struct Vector2 final {
 	float x, y;
 };
 
-
+//AABB
+struct AABB {
+	Vector3 min; //!< 最小点
+	Vector3 max; //!< 最大点
+};
 
 
 Vector3 Add(const Vector3& v1, const Vector3& v2);
@@ -78,3 +82,4 @@ Matrix4x4 MakeViewportMatrix(float leht, float top, float width, float height, f
 //座標変換
 Vector3 Transforms(const Vector3& vector, const Matrix4x4& matrix);
 
+bool IsCollision(const AABB& aabb, const Vector3& point);

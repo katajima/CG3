@@ -49,6 +49,10 @@ Vector3 Nomalize(const Vector3& v);
 Matrix4x4 MakeIdentity4x4();
 //行列の積
 Matrix4x4 Multiply(const Matrix4x4& v1, const Matrix4x4& v2);
+
+Vector3 Multiply(const Vector3& v1, const Vector3& v2);
+
+Vector3 Multiply(const float& v2, const Vector3& v1);
 //移動行列
 Matrix4x4 MakeTranslateMatrix(const  Vector3& translate);
 //拡大縮小行列

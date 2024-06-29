@@ -91,6 +91,7 @@ Matrix4x4 MakeIdentity4x4() {
 	return result;
 }
 //行列の積
+//行列の積
 Matrix4x4 Multiply(const Matrix4x4& v1, const Matrix4x4& v2) {
 	Matrix4x4 result{};
 
@@ -104,6 +105,26 @@ Matrix4x4 Multiply(const Matrix4x4& v1, const Matrix4x4& v2) {
 
 	return result;
 };
+// Vector3同士
+Vector3 Multiply(const Vector3& v1, const Vector3& v2) {
+	Vector3 result{};
+
+	result.x = v1.x * v2.x;
+	result.y = v1.y * v2.y;
+	result.z = v1.z * v2.z;
+
+	return result;
+}
+// floatとVector3
+Vector3 Multiply(const float& v, const Vector3& v1) {
+	Vector3 result{};
+
+	result.x = v1.x * v;
+	result.y = v1.y * v;
+	result.z = v1.z * v;
+
+	return result;
+}
 //移動行列
 Matrix4x4 MakeTranslateMatrix(const  Vector3& translate) {
 	Matrix4x4 result{};

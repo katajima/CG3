@@ -44,9 +44,11 @@ PixelShaderOutput main(VertexShaderOutput input)
      
     if (gMaterial.enableLighting != 0) // LightingÇ∑ÇÈèÍçá
     {
-        float NdotL = dot(normalize(input.nomal), -gDirectionalLight.direction);
-        float cos = pow(NdotL * 0.5f + 0.5f, 2.0f);
         float32_t3 toEye = normalize(gCamera.worldPosition - input.worldPosition);
+        float32_t3 halfVectorv= normalize(-gDirectionalLight.direction + toEye);
+        float NdotL = dot(normalize(input.nomal), halfVectorv);
+        float cos = pow(NdotL * 0.5f + 0.5f, 2.0f);
+       
         float32_t3 reflectLight = reflect(gDirectionalLight.direction, normalize(input.nomal));
         float RdotE = dot(reflectLight, toEye);
         float specularPow = pow(saturate(RdotE), gMaterial.shininess); //îΩéÀã≠ìx

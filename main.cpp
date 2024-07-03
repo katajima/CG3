@@ -1531,7 +1531,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Matrix4x4 worldViewProjectionMatrixSphar = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 			transformationMatrixDataSphar->World = worldViewProjectionMatrixSphar;
 			transformationMatrixDataSphar->WVP = worldViewProjectionMatrixSphar;
-			transformationMatrixDataSphar->worldInverseTranspose = Transpose(Inverse(worldViewProjectionMatrixSphar));
+			transformationMatrixDataSphar->worldInverseTranspose = Transpose(Inverse(worldMatrix));
 
 			
 			//UVTransformMaterial//Obj

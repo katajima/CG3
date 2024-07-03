@@ -21,11 +21,19 @@ struct DirectionalLight
     float intensity; //!< 輝度
 };
 
+struct PointLight
+{
+    float32_t4 color; //ライト色
+    float32_t3 position; // ライト位置
+    float intensity; //輝度
+};
+
 ConstantBuffer<Material> gMaterial : register(b0);
 ConstantBuffer<DirectionalLight> gDirectionalLight: register(b1);
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState sSampler : register(s0);
 ConstantBuffer<Camera> gCamera : register(b2);
+ConstantBuffer<PointLight> gPointLight : register(b3);
 
 ////------PixelShader------////
 struct PixelShaderOutput
@@ -41,7 +49,11 @@ PixelShaderOutput main(VertexShaderOutput input)
     
     float4 transformedUV = mul(float32_t4(input.texcoord, 0.0f, 1.0f), gMaterial.uvTransform);
     float32_t4 textureColor = gTexture.Sample(sSampler, transformedUV.xy);
-     
+    
+    float32_t3 pointLightDirection = normalize(input.worldPosition - gPointLight.position);
+    
+   
+    
     if (gMaterial.enableLighting != 0) // Lightingする場合
     {
         float32_t3 toEye = normalize(gCamera.worldPosition - input.worldPosition);
@@ -53,11 +65,15 @@ PixelShaderOutput main(VertexShaderOutput input)
         float RdotE = dot(reflectLight, toEye);
         float specularPow = pow(saturate(RdotE), gMaterial.shininess); //反射強度
         //拡散反射
-        float32_t3 diffuse = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
+        float32_t3 diffuseDirectionlLight = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
         //鏡面反射
-        float32_t3 speclar = gDirectionalLight.color.rgb * gDirectionalLight.intensity * specularPow * float32_t3(1.0f, 1.0f, 1.0f);
+        float32_t3 speclarDirectionlLight = gDirectionalLight.color.rgb * gDirectionalLight.intensity * specularPow * float32_t3(1.0f, 1.0f, 1.0f);
         
-        output.color.rgb = diffuse + speclar;
+        float32_t3 diffusePointLight = gMaterial.color.rgb * textureColor.rgb * gPointLight.color.rgb * cos * gPointLight.intensity;
+        
+        float32_t3 speclarPointLight = gPointLight.color.rgb * gPointLight.intensity * specularPow * float32_t3(1.0f, 1.0f, 1.0f);
+        
+        output.color.rgb = diffuseDirectionlLight + speclarDirectionlLight + diffusePointLight + speclarPointLight;
         output.color.a = gMaterial.color.a * textureColor.a;
 
         if (textureColor.a <= 0.5f)

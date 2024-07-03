@@ -107,6 +107,13 @@ struct DirectionalLight {
 	Vector3 direction; //!< ライトの向き
 	float intensity; //!< 輝度
 };
+
+struct PointLight {
+	Vector4 color; //ライト色
+	Vector3 position;// ライト位置
+	float intensity; //輝度
+};
+
 //モデルデータ
 struct ModelData
 {
@@ -849,7 +856,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	// RootParameter作成。複数指定できるのではい
-	D3D12_ROOT_PARAMETER rootParameters[5] = {};
+	D3D12_ROOT_PARAMETER rootParameters[6] = {};
 
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -871,6 +878,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[4].Descriptor.ShaderRegister = 2;
+	
+	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[5].Descriptor.ShaderRegister = 3;
 
 	descriptionSignature.pParameters = rootParameters;
 	descriptionSignature.NumParameters = _countof(rootParameters);
@@ -1070,6 +1081,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion //平行光源用のResource
 
+	////------PointLight用のReleaseを作る------////
+
+#pragma region MyRegion
+
+//平行光源用のリソースを作る
+	Microsoft::WRL::ComPtr < ID3D12Resource> pointLightResource = CreateBufferResource(device, sizeof(PointLight));
+
+
+	PointLight* pointLightData = nullptr;
+
+	pointLightResource->Map(0, nullptr, reinterpret_cast<void**>(&pointLightData));
+
+	
+	//今回は赤を書き込んで見る //白
+	*pointLightData = PointLight({ 1.0f,1.0f,1.0f,1.0f }, { 0.0f,-1.0f,-10.0f }, 1.0f);
+	
+
+#pragma endregion //PointLight用のResource
 
 	////------Material用のResourceを作る------////
 
@@ -1103,30 +1132,43 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region Material_Resource
 
-	////マテリアル用のリソースを作る。今回はcolor1つ分のサイズを利用する
-	//Microsoft::WRL::ComPtr < ID3D12Resource> materialResourceObj = CreateBufferResource(device, sizeof(Material));
+	//マテリアル用のリソースを作る。今回はcolor1つ分のサイズを利用する
+	Microsoft::WRL::ComPtr < ID3D12Resource> materialResourceObj = CreateBufferResource(device, sizeof(Material));
 
-	////マテリアルにデータを書き込む
-	////Vector4* materialData = nullptr;
 
-	//// Lightingを有効にする
-	//Material* materialDataObj = nullptr;
+	// Lightingを有効にする
+	Material* materialDataObj = nullptr;
 
-	////書き込むためのアドレスを取得
-	//materialResourceObj->Map(0, nullptr, reinterpret_cast<void**>(&materialDataObj));
+	//書き込むためのアドレスを取得
+	materialResourceObj->Map(0, nullptr, reinterpret_cast<void**>(&materialDataObj));
 
-	////スプライトはLightingしないのでfalseにする
-	//materialDataObj->enableLighting = false;
+	//スプライトはLightingしないのでfalseにする
+	materialDataObj->enableLighting = false;
 
-	//materialDataObj->uvTransform = MakeIdentity4x4();
+	materialDataObj->uvTransform = MakeIdentity4x4();
 
-	////今回は赤を書き込んで見る //白
-	//*materialDataObj = Material({ 1.0f, 1.0f, 1.0f, 1.0f }, { false }); //RGBA
+	//今回は赤を書き込んで見る //白
+	*materialDataObj = Material({ 1.0f, 1.0f, 1.0f, 1.0f }, { false }); //RGBA
 
 #pragma endregion //マテリアルObj用Resource
 
 
 	////------Matrix用のResourceを作る------////
+
+	////------transformationMatrixResource------////OBJ
+
+	Microsoft::WRL::ComPtr < ID3D12Resource> transformationMatrixResourceObj = CreateBufferResource(device, sizeof(TransfomationMatrix));
+
+	//データを書き込む
+	TransfomationMatrix* transformationMatrixDataObj = nullptr;
+
+	//書き込むためのアドレスを取得
+	transformationMatrixResourceObj->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataObj));
+
+	//単位行列を書き込んでおく
+	transformationMatrixDataObj->World = MakeIdentity4x4();
+	transformationMatrixDataObj->WVP = MakeIdentity4x4();
+	transformationMatrixDataObj->worldInverseTranspose = MakeIdentity4x4();
 
 
 #pragma region Matrix_Resource
@@ -1299,6 +1341,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
+	ModelData modeldata = LoadOdjFile("resources", "plane.obj");
+	//頂点リソースを作る
+	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResourceObj = CreateBufferResource(device, sizeof(VertexData) * modeldata.vertices.size());
+
+	//頂点バッファビューを作成する
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewObj{};
+	vertexBufferViewObj.BufferLocation = vertexResourceObj->GetGPUVirtualAddress();
+	vertexBufferViewObj.SizeInBytes = UINT(sizeof(VertexData) * modeldata.vertices.size());
+	vertexBufferViewObj.StrideInBytes = sizeof(VertexData);
+
+	//頂点データを書き込む
+	VertexData* vertexDataObj = nullptr;
+	vertexResourceObj->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataObj));
+	std::memcpy(vertexDataObj, modeldata.vertices.data(), sizeof(VertexData)* modeldata.vertices.size());
+
+
 
 	//マテリアル用のリソースを作る。今回はcolor1つ分のサイズを利用する
 	Microsoft::WRL::ComPtr < ID3D12Resource> cameraResource = CreateBufferResource(device, sizeof(CameraGPU));
@@ -1414,6 +1472,37 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion //Texture2
 
 
+	////------Textuer------////台地
+
+#pragma region Texture
+
+//二枚目のTextureを読んで転送する
+	DirectX::ScratchImage mipImages3 = LoadTexture("resources/grass.png");
+	const DirectX::TexMetadata& metadata3 = mipImages3.GetMetadata();
+	Microsoft::WRL::ComPtr < ID3D12Resource> textureResource3 = CreateTextureResource(device, metadata3);
+
+	Microsoft::WRL::ComPtr < ID3D12Resource> intermediateResource3 = UploadTextureData(textureResource3.Get(), mipImages3, device, commandList);
+
+
+	//
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc3{};
+	srvDesc3.Format = metadata3.format;
+	srvDesc3.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc3.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // 2Dテクスチャ
+	srvDesc3.Texture2D.MipLevels = UINT(metadata3.mipLevels);
+
+	// SRVを作成するDescriptorHeapの場所を決める
+	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU3 = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);//srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU3 = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);//srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
+
+	// SRV
+	device->CreateShaderResourceView(textureResource3.Get(), &srvDesc3, textureSrvHandleCPU3);
+
+
+#pragma endregion //Texture3
+
+
 	// DepthStencilTextureをウィンドウサイズで作成
 	Microsoft::WRL::ComPtr < ID3D12Resource> depthStencilResource = CreateDepthStencilTextureResource(device.Get(), kClientWidth, kClientHeight);
 
@@ -1431,6 +1520,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// DSVHeapの先頭にDSVを作る
 	device->CreateDepthStencilView(depthStencilResource.Get(), &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
+	
+
+
+
+	
 
 
 	//カメラ
@@ -1439,7 +1533,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{ 0.0f,0.0f,0.0f },
 		{ 0.0f,0.0f,-10.0f }
 	};
-;
+	//cameraTransform.translate.y = 5.0f;
+	//cameraTransform.translate.z = -10.0f;
+	//cameraTransform.rotate.x = 0.6f;
+
 
 	// CPUで動かす用のTransformを作る
 
@@ -1458,6 +1555,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// CPUで動かす用のTransformを作る
 	Transform transformSphar{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
+	Transform transformObj{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	//transformObj.translate.y = -1.0f;
+	//transformObj.translate.z = 5.0f;
 
 	//UVTransform用
 	Transform uvTransformSphar{
@@ -1467,7 +1567,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	//
-	bool useMonsterBall = true;
+	//bool useMonsterBall = true;
 	//bool usebillboard = true;
 	//bool upData = true;
 	//bool upDataWind = false;
@@ -1518,6 +1618,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
 			ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
 			ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
+			ImGui::DragFloat3("TranslateObj ", &transformObj.translate.x ,0.1f);
+			ImGui::DragFloat3("RotateObj", &transformObj.rotate.x ,0.1f);
 			ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
 			ImGui::SliderAngle("UVRotate", &uvTransformSphar.rotate.z);
@@ -1525,13 +1627,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			Matrix4x4 cameraMatrix = MakeAffineMatrixMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
-			////透視射影行列
-			projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+			
+			//スフィア用
 			Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transformSphar.scale, transformSphar.rotate, transformSphar.translate);
 			Matrix4x4 worldViewProjectionMatrixSphar = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 			transformationMatrixDataSphar->World = worldViewProjectionMatrixSphar;
 			transformationMatrixDataSphar->WVP = worldViewProjectionMatrixSphar;
 			transformationMatrixDataSphar->worldInverseTranspose = Transpose(Inverse(worldMatrix));
+			
+			//台地用
+			Matrix4x4 worldMatrixObj = MakeAffineMatrixMatrix(transformObj.scale, transformObj.rotate, transformObj.translate);
+			Matrix4x4 worldViewProjectionMatrixObj = Multiply(worldMatrixObj, Multiply(viewMatrix, projectionMatrix));
+			transformationMatrixDataObj->World = worldViewProjectionMatrixObj;
+			transformationMatrixDataObj->WVP = worldViewProjectionMatrixObj;
+			transformationMatrixDataObj->worldInverseTranspose = Transpose(Inverse(worldMatrixObj));
+
 
 			
 			//UVTransformMaterial//Obj
@@ -1614,11 +1724,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 
+			////------ポイントライト用------////
+
+			commandList->SetGraphicsRootConstantBufferView(5, pointLightResource->GetGPUVirtualAddress());
 
 			////------平行光源用------////
 
 
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+
 
 
 
@@ -1630,22 +1744,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//------球------////
 
 			//マテリアルCBufferの場所を設定
-			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-
-			//テクスチャ[モンスターボール]
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
-
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphar); // VBVを設定
-			commandList->IASetIndexBuffer(&indexBufferViewSphar); // IBVを設定
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 
 			// transformationMatrixResource
-			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSphar->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSphar->GetGPUVirtualAddress());
 
+			//テクスチャ[モンスターボール]
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
+
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphar); // VBVを設定
+			//commandList->IASetIndexBuffer(&indexBufferViewSphar); // IBVを設定
+
+			
 			// 描画コマンド
-			commandList->DrawIndexedInstanced(indexSphar6, 1, 0, 0, 0);
+			//commandList->DrawIndexedInstanced(indexSphar6, 1, 0, 0, 0);
 
 
+			////------台地------////
 
+			commandList->SetGraphicsRootConstantBufferView(0, materialResourceObj->GetGPUVirtualAddress());
+
+			//vertexBufferViewSprite
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewObj); //VBVを設定
+
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU3);
+			//トランスフォームMatrixResource
+			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceObj->GetGPUVirtualAddress());
+			
+
+			commandList->DrawInstanced(UINT(modeldata.vertices.size()), 1, 0, 0);
 
 
 

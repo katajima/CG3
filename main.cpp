@@ -93,6 +93,7 @@ struct TransfomationMatrix
 {
 	Matrix4x4 WVP;
 	Matrix4x4 World;
+	Matrix4x4 worldInverseTranspose;
 };
 struct ParticleForGPU
 {
@@ -1165,6 +1166,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//単位行列を書き込んでおく
 	transformationMatrixDataSphar->World = MakeIdentity4x4();
 	transformationMatrixDataSphar->WVP = MakeIdentity4x4();
+	transformationMatrixDataSphar->worldInverseTranspose = MakeIdentity4x4();
 
 #pragma endregion
 
@@ -1310,50 +1312,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	cameraData->worldPosition= Vector3();
 	
 
-
-
-
-
-
-
-	////------VertexBufferViewを作成する------////
-
-	//モデル読み込み
-	//ModelData modeldata; //LoadOdjFile("resources", "fence.obj");
-	//modeldata.vertices.push_back({ .position = {1.0f,1.0f,0.0f,1.0f} ,.texcoord = {0.0f,0.0f},.normal = {0.0f,0.0f,1.0f } });	// 左上
-	//modeldata.vertices.push_back({ .position = {-1.0f,1.0f,0.0f,1.0f} ,.texcoord = {1.0f,0.0f},.normal = {0.0f,0.0f,1.0f } });	// 右上
-	//modeldata.vertices.push_back({ .position = {1.0f,-1.0f,0.0f,1.0f} ,.texcoord = {0.0f,1.0f},.normal = {0.0f,0.0f,1.0f } });	// 左下
-	//modeldata.vertices.push_back({ .position = {1.0f,-1.0f,0.0f,1.0f} ,.texcoord = {0.0f,1.0f},.normal = {0.0f,0.0f,1.0f } });	// 左下
-	//modeldata.vertices.push_back({ .position = {-1.0f,1.0f,0.0f,1.0f} ,.texcoord = {1.0f,0.0f},.normal = {0.0f,0.0f,1.0f } });	// 右上
-	//modeldata.vertices.push_back({ .position = {-1.0f,-1.0f,0.0f,1.0f} ,.texcoord = {1.0f,1.0f},.normal = {0.0f,0.0f,1.0f } });	// 右下
-	//modeldata.material.textuerFilePath = "resources/circle.png";
-
-	////頂点リソースを作る
-	//Microsoft::WRL::ComPtr < ID3D12Resource> vertexResourceObj = CreateBufferResource(device, sizeof(VertexData) * modeldata.vertices.size());
-
-	////頂点バッファビューを作成する
-	//D3D12_VERTEX_BUFFER_VIEW vertexBufferViewObj{};
-	//vertexBufferViewObj.BufferLocation = vertexResourceObj->GetGPUVirtualAddress();
-	//vertexBufferViewObj.SizeInBytes = UINT(sizeof(VertexData) * modeldata.vertices.size());
-	//vertexBufferViewObj.StrideInBytes = sizeof(VertexData);
-
-	////頂点データを書き込む
-	//VertexData* vertexDataObj = nullptr;
-	//vertexResourceObj->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataObj));
-	//std::memcpy(vertexDataObj, modeldata.vertices.data(), sizeof(VertexData) * modeldata.vertices.size());
-
-
-	/*D3D12_SHADER_RESOURCE_VIEW_DESC instancingSrvDesc{};
-	instancingSrvDesc.Format = DXGI_FORMAT_UNKNOWN;
-	instancingSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	instancingSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	instancingSrvDesc.Buffer.FirstElement = 0;
-	instancingSrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-	instancingSrvDesc.Buffer.NumElements = kNumMaxInstance;
-	instancingSrvDesc.Buffer.StructureByteStride = sizeof(ParticleForGPU);
-	D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
-	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
-	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, instancingSrvHandleCPU);*/
 
 	////------ViewportとScissor(シザー)------////
 
@@ -1531,7 +1489,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-
+	materialData->enableLighting = true;
 	MSG msg{};
 	//ウィンドウの×ボタンが押されるまでループ
 	while (msg.message != WM_QUIT) {
@@ -1557,6 +1515,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			directionalLightData->direction = Nomalize(directionalLightData->direction);
 			ImGui::ColorEdit4("color", &materialData->color.x);
 			ImGui::DragFloat("shininess", &materialData->shininess,0.01f);
+			ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
+			ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
+			ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
 			ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
 			ImGui::SliderAngle("UVRotate", &uvTransformSphar.rotate.z);
@@ -1570,7 +1531,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Matrix4x4 worldViewProjectionMatrixSphar = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 			transformationMatrixDataSphar->World = worldViewProjectionMatrixSphar;
 			transformationMatrixDataSphar->WVP = worldViewProjectionMatrixSphar;
-
+			transformationMatrixDataSphar->worldInverseTranspose = Transpose(Inverse(worldViewProjectionMatrixSphar));
 
 			
 			//UVTransformMaterial//Obj

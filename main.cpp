@@ -1043,7 +1043,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// Depthの機能を有効化する
 	depthStencilDesc.DepthEnable = true;
 	// 書き込みします
-	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	// 比較関数はLessEqual。つまり、近ければ描画される
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
@@ -1057,6 +1057,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		IID_PPV_ARGS(&graphicsPipelineState));
 
 	assert(SUCCEEDED(hr));
+
 
 #pragma endregion
 
@@ -1124,6 +1125,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	*materialData = Material({ 1.0f, 1.0f, 1.0f, 1.0f }, { true }); //RGBA
 	materialData->uvTransform = MakeIdentity4x4();
 	materialData->shininess = 50.0f;
+
+#pragma endregion //マテリアル用Resource
+
+#pragma region Material_Resource
+
+	//マテリアル用のリソースを作る。今回はcolor1つ分のサイズを利用する
+	Microsoft::WRL::ComPtr < ID3D12Resource> materialResourceSphar = CreateBufferResource(device, sizeof(Material));
+
+	//マテリアルにデータを書き込む
+	//Vector4* materialData = nullptr;
+
+	// Lightingを有効にする
+	Material* materialDataSphar = nullptr;
+	//materialDataSprit->enableLighting = false;
+
+	//書き込むためのアドレスを取得
+	materialResourceSphar->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSphar));
+
+
+
+	//今回は赤を書き込んで見る //白
+	*materialDataSphar = Material({ 1.0f, 1.0f, 1.0f, 1.0f }, { true }); //RGBA
+	materialDataSphar->uvTransform = MakeIdentity4x4();
+	materialDataSphar->shininess = 50.0f;
 
 #pragma endregion //マテリアル用Resource
 
@@ -1394,7 +1419,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 	//モデル読み込み
-	ModelData modeldata = LoadOdjFile("resources", "plane.obj");
+	ModelData modeldata = LoadOdjFile("resources", "terrain.obj");
 
 	//頂点リソースを作る
 	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResourceObj = CreateBufferResource(device, sizeof(VertexData) * modeldata.vertices.size());
@@ -1609,12 +1634,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Transform transformSphar{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
-	Transform Ttransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	//Transform Ttransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 	//transformObj.translate.y = -1.0f;
 	//transformObj.translate.z = 5.0f;
-	transform.rotate.y = 3.14f;
+	//transform.rotate.y = 3.14f;
 	//UVTransform用
 	Transform uvTransformSphar{
+		{1.0f,1.0f,1.0f},
+		{0.0f,0.0f,0.0f},
+		{0.0f,0.0f,0.0f},
+	};	
+	Transform uvTransformObj{
 		{1.0f,1.0f,1.0f},
 		{0.0f,0.0f,0.0f},
 		{0.0f,0.0f,0.0f},
@@ -1629,6 +1659,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 
 	const float kDeltaTime = 1.0f / 60.0f;
 	//
+	directionalLightData->intensity = 0;
 
 
 	// ImGuiの初期化
@@ -1667,13 +1698,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
 			ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
 			directionalLightData->direction = Nomalize(directionalLightData->direction);
+			ImGui::DragFloat3("pointLightDataPosition", &pointLightData->position.x);
+			ImGui::DragFloat("pointLightDataIntensity", &pointLightData->intensity,0.01f);
 			ImGui::ColorEdit4("color", &materialData->color.x);
 			ImGui::DragFloat("shininess", &materialData->shininess,0.01f);
 			ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
 			ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
 			ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
 			ImGui::DragFloat3("TranslateObj ", &transform.translate.x ,0.1f);
-			ImGui::DragFloat3("Ttransform ", &Ttransform.translate.x ,0.1f);
+			//ImGui::DragFloat3("Ttransform ", &Ttransform.translate.x ,0.1f);
 			ImGui::DragFloat3("RotateObj", &transform.rotate.x ,0.1f);
 			ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
@@ -1699,18 +1732,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			transformationMatrixData->World = worldViewProjectionMatrix;
 			transformationMatrixData->WVP = worldViewProjectionMatrix;
 
-			Matrix4x4 TworldMatrix = MakeAffineMatrixMatrix(Ttransform.scale, Ttransform.rotate, Ttransform.translate);
+			/*Matrix4x4 TworldMatrix = MakeAffineMatrixMatrix(Ttransform.scale, Ttransform.rotate, Ttransform.translate);
 			projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 			Matrix4x4 TworldViewProjectionMatrix = Multiply(TworldMatrix, Multiply(viewMatrix, projectionMatrix));
 			TtransformationMatrixData->World = TworldViewProjectionMatrix;
-			TtransformationMatrixData->WVP = TworldViewProjectionMatrix;
+			TtransformationMatrixData->WVP = TworldViewProjectionMatrix;*/
 
 			
 			//UVTransformMaterial//Obj
-			/*Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSphar.scale);
-			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSphar.rotate.z));
-			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSphar.translate));
-			materialData->uvTransform = uvTransformMatrix;*/
+			Matrix4x4 uvTransformMatrixObj = MakeScaleMatrix(uvTransformObj.scale);
+			uvTransformMatrixObj = Multiply(uvTransformMatrixObj, MakeRotateZMatrix(uvTransformObj.rotate.z));
+			uvTransformMatrixObj = Multiply(uvTransformMatrixObj, MakeTranslateMatrix(uvTransformObj.translate));
+			materialDataObj->uvTransform = uvTransformMatrixObj;
+			
+			Matrix4x4 uvTransformMatrixSphar = MakeScaleMatrix(uvTransformSphar.scale);
+			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeRotateZMatrix(uvTransformSphar.rotate.z));
+			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeTranslateMatrix(uvTransformSphar.translate));
+			materialDataSphar->uvTransform = uvTransformMatrixSphar;
+
+
+
+
 
 			//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
 			ImGui::ShowDemoWindow();
@@ -1823,7 +1865,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			
 			// ------台地------
-
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU3);
 			// ルートパラメータの設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceObj->GetGPUVirtualAddress());
 			//トランスフォームMatrixResource
@@ -1835,14 +1877,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
-			// wvp用のCBufferの場所を設定
-			commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+			//// wvp用のCBufferの場所を設定
+			//commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
 
-			//描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
-			commandList->DrawInstanced(6, 1, 0, 0);
+			////描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
+			//commandList->DrawInstanced(6, 1, 0, 0);
 
 
 

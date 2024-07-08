@@ -2292,7 +2292,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->DrawInstanced(UINT(modeldata.vertices.size()), 1, 0, 0);
 
 
+			//三角形
+commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
 
+// wvp用のCBufferの場所を設定
+commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
+
+//描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
+commandList->DrawInstanced(6, 1, 0, 0);
 
 
 

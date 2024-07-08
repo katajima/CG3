@@ -2089,6 +2089,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{1.0f,1.0f,1.0f},
 		{0.0f,0.0f,0.0f},
 		{0.0f,0.0f,0.0f},
+	};Transform uvTransform{
+		{1.0f,1.0f,1.0f},
+		{0.0f,0.0f,0.0f},
+		{0.0f,0.0f,0.0f},
 	};
 
 	//UVTransform用
@@ -2182,16 +2186,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 			//UVTransformMaterial
-			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
-			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
-			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
-			materialDataSprite->uvTransform = uvTransformMatrix;
+			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransform.scale);
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransform.rotate.z));
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransform.translate));
+			materialData->uvTransform = uvTransformMatrix;
 
 			//UVTransformMaterial//球
-			Matrix4x4 uvTransformMatrixSphar = MakeScaleMatrix(uvTransformSphar.scale);
+			/*Matrix4x4 uvTransformMatrixSphar = MakeScaleMatrix(uvTransformSphar.scale);
 			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeRotateZMatrix(uvTransformSphar.rotate.z));
 			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeTranslateMatrix(uvTransformSphar.translate));
-			materialData->uvTransform = uvTransformMatrixSphar;
+			materialData->uvTransform = uvTransformMatrixSphar;*/
 
 			//UVTransformMaterial//球
 			Matrix4x4 uvTransformMatrixObj = MakeScaleMatrix(uvTransformObj.scale);
@@ -2292,8 +2296,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->DrawInstanced(UINT(modeldata.vertices.size()), 1, 0, 0);
 
 
-
-
+//			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+//			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
+//			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+//// wvp用のCBufferの場所を設定
+//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
+//
+////描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
+//commandList->DrawInstanced(6, 1, 0, 0);
 
 
 			// 実際のcommandListのImGuiの描画コマンドを積む(一番最後の描画)

@@ -1835,8 +1835,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
+			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
-
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 			// wvp用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
 

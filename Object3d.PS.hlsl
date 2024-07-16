@@ -75,18 +75,19 @@ PixelShaderOutput main(VertexShaderOutput input)
         
         
         // ポイントライトの処理
-        float32_t3 halfVectorvP = normalize(-pointLightDirection + toEye);
-        float NdotLP = dot(normalize(input.nomal), halfVectorvP);
+        float3 halfVectorP = normalize(-pointLightDirection + toEye);
+        float NdotLP = dot(normalize(input.nomal), halfVectorP);
         float cosP = pow(NdotLP * 0.5f + 0.5f, 2.0f);
-        float32_t3 reflectLightP = reflect(pointLightDirection, normalize(input.nomal));
+        
+        float3 reflectLightP = reflect(pointLightDirection, normalize(input.nomal));
         float RdotEP = dot(reflectLightP, toEye);
         float specularPowP = pow(saturate(RdotEP), gMaterial.shininess);
         
-        float32_t distance = length(gPointLight.position - input.worldPosition);
-        float32_t factor = pow(saturate(-distance / gPointLight.radius + 1.0),gPointLight.decay);
+        float distanceP = length(gPointLight.position - input.worldPosition);
+        float attenuationFactorP = pow(saturate(-distanceP / gPointLight.radius + 1.0), gPointLight.decay);
         
-        float32_t3 diffusePointLight = gMaterial.color.rgb * textureColor.rgb * gPointLight.color.rgb * cosP * gPointLight.intensity * factor;
-        float32_t3 specularPointLight = gPointLight.color.rgb * gPointLight.intensity * specularPowP * float32_t3(1.0f, 1.0f, 1.0f);
+        float3 diffusePointLight = gMaterial.color.rgb * textureColor.rgb * gPointLight.color.rgb * cosP * gPointLight.intensity * attenuationFactorP;
+        float3 specularPointLight = gPointLight.color.rgb * gPointLight.intensity * specularPowP * attenuationFactorP * float3(1.0f, 1.0f, 1.0f);
         
         output.color.rgb = diffuseDirectionalLight + specularDirectionalLight + diffusePointLight + specularPointLight;
         output.color.a = gMaterial.color.a * textureColor.a;

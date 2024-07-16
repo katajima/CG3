@@ -127,7 +127,7 @@ struct  D3DResourceLeakchecker {
 	}
 };
 
-Particle MakeNewParticle(std::mt19937& randomEngine,const Vector3& translate)
+Particle MakeNewParticle(std::mt19937& randomEngine, const Vector3& translate)
 {
 	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
@@ -153,7 +153,7 @@ Particle MakeNewParticle(std::mt19937& randomEngine,const Vector3& translate)
 std::list<Particle> Emit(const Emitter& emitter, std::mt19937& randomEngine) {
 	std::list<Particle> particles;
 	for (uint32_t count = 0; count < emitter.count; ++count) {
-		particles.push_back(MakeNewParticle(randomEngine,emitter.transform.translate));
+		particles.push_back(MakeNewParticle(randomEngine, emitter.transform.translate));
 	}
 	return particles;
 }
@@ -1089,7 +1089,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 
 	materialData->uvTransform = MakeIdentity4x4();
-	
+
 	//今回は赤を書き込んで見る //白
 	*materialData = Material({ 1.0f, 1.0f, 1.0f, 1.0f }, { true }); //RGBA
 	materialData->shininess = 50.0f;
@@ -1307,8 +1307,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	cameraResource->Map(0, nullptr, reinterpret_cast<void**>(&cameraData));
 
 
-	cameraData->worldPosition= Vector3();
-	
+
+	cameraData->worldPosition = Vector3{1.0f,1.0f,1.0f};
+
+
 
 
 
@@ -1481,7 +1483,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{ 0.0f,0.0f,0.0f },
 		{ 0.0f,0.0f,-10.0f }
 	};
-;
+	;
 
 	// CPUで動かす用のTransformを作る
 
@@ -1550,13 +1552,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			ImGui::Begin("Window");
 			ImGui::DragFloat3("camera.translate.x", &cameraTransform.translate.x, 0.1f);
+			ImGui::DragFloat3("cameraData.worldPosition.x", &cameraData->worldPosition.x, 0.1f);
 			ImGui::SliderFloat3("camera.rotate", &cameraTransform.rotate.x, -3.14f, 3.14f);
 			ImGui::DragInt("enableLighting", &materialData->enableLighting);
-			ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
+			ImGui::SliderFloat3("LightDirection", &directionalLightData->direction.x, -1.0f, 1.0f);
 			ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
 			directionalLightData->direction = Nomalize(directionalLightData->direction);
 			ImGui::ColorEdit4("color", &materialData->color.x);
-			ImGui::DragFloat("shininess", &materialData->shininess,0.01f);
+			ImGui::DragFloat("shininess", &materialData->shininess, 0.01f);
 			ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
 			ImGui::SliderAngle("UVRotate", &uvTransformSphar.rotate.z);
@@ -1572,7 +1575,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			transformationMatrixDataSphar->WVP = worldViewProjectionMatrixSphar;
 
 
-			
+
 			//UVTransformMaterial//Obj
 			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSphar.scale);
 			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSphar.rotate.z));

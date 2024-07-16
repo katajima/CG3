@@ -449,7 +449,7 @@ ModelData LoadOdjFile(const std::string& directoryPath, const std::string& filen
 				aiVector3D& texcoord = mesh->mTextureCoords[0][vertexIndex];
 				VertexData vertex;
 				vertex.position = { position.x,position.y,position.z,1.0f };
-				vertex.normal = { normal.x,normal.y,normal.y };
+				vertex.normal = { normal.x,normal.y,normal.z };
 				vertex.texcoord = { texcoord.x,texcoord.y };
 
 				// aiProcess_MakeLeftHandedはz*=-1で、右手->左手に変換するので手動で対応

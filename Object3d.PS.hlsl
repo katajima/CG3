@@ -27,7 +27,10 @@ struct PointLight
     float32_t4 color; //ライト色
     float32_t3 position; // ライト位置
     float intensity; //輝度
+    float radius; // !< ライトの届く最大距離
+    float decay; //!< 減衰率 
 };
+
 
 ConstantBuffer<Material> gMaterial : register(b0);
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
@@ -58,32 +61,34 @@ PixelShaderOutput main(VertexShaderOutput input)
     if (gMaterial.enableLighting != 0) // Lightingする場合
     {
         float32_t3 toEye = normalize(gCamera.worldPosition - input.worldPosition);
+        
+        // 平行光源の処理
         float32_t3 halfVectorv = normalize(-gDirectionalLight.direction + toEye);
         float NdotL = dot(normalize(input.nomal), halfVectorv);
-        float32_t3 halfVectorvP = normalize(-pointLightDirection + toEye);
-        float NdotLP = dot(normalize(input.nomal), halfVectorvP);
         float cos = pow(NdotL * 0.5f + 0.5f, 2.0f);
-        float cosP = pow(NdotLP * 0.5f + 0.5f, 2.0f);
-       
         float32_t3 reflectLight = reflect(gDirectionalLight.direction, normalize(input.nomal));
         float RdotE = dot(reflectLight, toEye);
-        float specularPow = pow(saturate(RdotE), gMaterial.shininess); //反射強度
+        float specularPow = pow(saturate(RdotE), gMaterial.shininess);
         
-        //拡散反射
-        float32_t3 diffuseDirectionlLight = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
-        //鏡面反射
-        float32_t3 speclarDirectionlLight = gDirectionalLight.color.rgb * gDirectionalLight.intensity * specularPow * float32_t3(1.0f, 1.0f, 1.0f);
+        float32_t3 diffuseDirectionalLight = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
+        float32_t3 specularDirectionalLight = gDirectionalLight.color.rgb * gDirectionalLight.intensity * specularPow * float32_t3(1.0f, 1.0f, 1.0f);
         
         
+        // ポイントライトの処理
+        float32_t3 halfVectorvP = normalize(-pointLightDirection + toEye);
+        float NdotLP = dot(normalize(input.nomal), halfVectorvP);
+        float cosP = pow(NdotLP * 0.5f + 0.5f, 2.0f);
         float32_t3 reflectLightP = reflect(pointLightDirection, normalize(input.nomal));
         float RdotEP = dot(reflectLightP, toEye);
-        float specularPowP = pow(saturate(RdotEP), gMaterial.shininess); //反射強度
+        float specularPowP = pow(saturate(RdotEP), gMaterial.shininess);
         
-        float32_t3 diffusePointLight = gMaterial.color.rgb * textureColor.rgb * gPointLight.color.rgb * cosP * gPointLight.intensity;
+        float32_t distance = length(gPointLight.position - input.worldPosition);
+        float32_t factor = pow(saturate(-distance / gPointLight.radius + 1.0),gPointLight.decay);
         
-        float32_t3 speclarPointLight = gPointLight.color.rgb * gPointLight.intensity * specularPowP * float32_t3(1.0f, 1.0f, 1.0f);
+        float32_t3 diffusePointLight = gMaterial.color.rgb * textureColor.rgb * gPointLight.color.rgb * cosP * gPointLight.intensity * factor;
+        float32_t3 specularPointLight = gPointLight.color.rgb * gPointLight.intensity * specularPowP * float32_t3(1.0f, 1.0f, 1.0f);
         
-        output.color.rgb = diffuseDirectionlLight + speclarDirectionlLight + diffusePointLight + speclarPointLight;
+        output.color.rgb = diffuseDirectionalLight + specularDirectionalLight + diffusePointLight + specularPointLight;
         output.color.a = gMaterial.color.a * textureColor.a;
 
         if (textureColor.a <= 0.5f)

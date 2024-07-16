@@ -111,7 +111,10 @@ struct DirectionalLight {
 struct PointLight {
 	Vector4 color; //ライト色
 	Vector3 position;// ライト位置
-	float intensity; //輝度
+	float intensity; // 輝度
+	float radius;    // ライトの届く距離
+	float decay;     // 減衰率
+	float padding[2];
 };
 
 //モデルデータ
@@ -1446,7 +1449,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	cameraResource->Map(0, nullptr, reinterpret_cast<void**>(&cameraData));
 
 
-	cameraData->worldPosition= Vector3();
+	cameraData->worldPosition = Vector3{1.0f,1.0f,1.0f};
 	
 
 
@@ -1611,6 +1614,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{ 0.0f,0.0f,0.0f },
 		{ 0.0f,0.0f,-10.0f }
 	};
+	cameraTransform.translate = {0,8,-20};
+	cameraTransform.rotate.x = 0.3f;
 	//cameraTransform.translate.y = 5.0f;
 	//cameraTransform.translate.z = -10.0f;
 	//cameraTransform.rotate.x = 0.6f;
@@ -1631,9 +1636,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	// CPUで動かす用のTransformを作る
-	Transform transformSphar{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	Transform transformSphar{ {1.0f,1.0f,1.0f},{0.0f,-3.14f,0.0f},{0.0f,0.0f,0.0f} };
 
-	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+
+	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,-3.14f,0.0f},{0.0f,0.0f,0.0f} };
 	//Transform Ttransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 	//transformObj.translate.y = -1.0f;
 	//transformObj.translate.z = 5.0f;
@@ -1660,7 +1666,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	const float kDeltaTime = 1.0f / 60.0f;
 	//
 	directionalLightData->intensity = 0;
-
+	pointLightData->position = { 0,0.2f,0 };
+	pointLightData->radius = 4.1f;
+	pointLightData->decay = 1.6f;
 
 	// ImGuiの初期化
 	IMGUI_CHECKVERSION();
@@ -1698,39 +1706,43 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
 			ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
 			directionalLightData->direction = Nomalize(directionalLightData->direction);
-			ImGui::DragFloat3("pointLightDataPosition", &pointLightData->position.x);
-			ImGui::DragFloat("pointLightDataIntensity", &pointLightData->intensity,0.01f);
+			ImGui::DragFloat3("pointLightData Position", &pointLightData->position.x,0.1f);
+			ImGui::DragFloat("pointLightData Intensity", &pointLightData->intensity,0.01f);
+			ImGui::DragFloat("pointLightData Radius", &pointLightData->radius,0.01f);
+			ImGui::DragFloat("pointLightData Decay", &pointLightData->decay,0.01f);
 			ImGui::ColorEdit4("color", &materialData->color.x);
 			ImGui::DragFloat("shininess", &materialData->shininess,0.01f);
-			ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
-			ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
-			ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
-			ImGui::DragFloat3("TranslateObj ", &transform.translate.x ,0.1f);
+			//ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
+			//ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
+			//ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
+			//ImGui::DragFloat3("TranslateObj ", &transform.translate.x ,0.1f);
 			//ImGui::DragFloat3("Ttransform ", &Ttransform.translate.x ,0.1f);
-			ImGui::DragFloat3("RotateObj", &transform.rotate.x ,0.1f);
-			ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
-			ImGui::SliderAngle("UVRotate", &uvTransformSphar.rotate.z);
+			//ImGui::DragFloat3("RotateObj", &transform.rotate.x ,0.1f);
+			//ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
+			//ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
+			//ImGui::SliderAngle("UVRotate", &uvTransformSphar.rotate.z);
 			ImGui::End();
 
 			// カメラ行列
 			Matrix4x4 cameraMatrix = MakeAffineMatrixMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 
-			// スフィア用
+			// 球のワールド行列とWVP行列
 			Matrix4x4 worldMatrixSphar = MakeAffineMatrixMatrix(transformSphar.scale, transformSphar.rotate, transformSphar.translate);
 			Matrix4x4 worldViewProjectionMatrixSphar = Multiply(worldMatrixSphar, Multiply(viewMatrix, projectionMatrix));
 			transformationMatrixDataSphar->World = worldMatrixSphar;
 			transformationMatrixDataSphar->WVP = worldViewProjectionMatrixSphar;
 			transformationMatrixDataSphar->worldInverseTranspose = Transpose(Inverse(worldMatrixSphar));
 
-			// 台地用
-			////透視射影行列
+			// 台地のワールド行列とWVP行列
 			Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transform.scale, transform.rotate, transform.translate);
-			projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-			transformationMatrixData->World = worldViewProjectionMatrix;
+			transformationMatrixData->World = worldMatrix;
 			transformationMatrixData->WVP = worldViewProjectionMatrix;
+
+			// カメラの位置を設定
+			cameraData->worldPosition = cameraTransform.translate;
+			
 
 			/*Matrix4x4 TworldMatrix = MakeAffineMatrixMatrix(Ttransform.scale, Ttransform.rotate, Ttransform.translate);
 			projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
@@ -1740,7 +1752,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			
 			//UVTransformMaterial//Obj
-			Matrix4x4 uvTransformMatrixObj = MakeScaleMatrix(uvTransformObj.scale);
+			/*Matrix4x4 uvTransformMatrixObj = MakeScaleMatrix(uvTransformObj.scale);
 			uvTransformMatrixObj = Multiply(uvTransformMatrixObj, MakeRotateZMatrix(uvTransformObj.rotate.z));
 			uvTransformMatrixObj = Multiply(uvTransformMatrixObj, MakeTranslateMatrix(uvTransformObj.translate));
 			materialDataObj->uvTransform = uvTransformMatrixObj;
@@ -1748,7 +1760,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Matrix4x4 uvTransformMatrixSphar = MakeScaleMatrix(uvTransformSphar.scale);
 			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeRotateZMatrix(uvTransformSphar.rotate.z));
 			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeTranslateMatrix(uvTransformSphar.translate));
-			materialDataSphar->uvTransform = uvTransformMatrixSphar;
+			materialDataSphar->uvTransform = uvTransformMatrixSphar;*/
 
 
 

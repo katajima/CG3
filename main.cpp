@@ -130,12 +130,40 @@ struct SpotLight
 	float padding[2];
 };
 
+struct  Node
+{
+	Matrix4x4 localMatrix;
+	std::string name;
+	std::vector<Node> children;
+};
+
 //モデルデータ
 struct ModelData
 {
 	std::vector<VertexData> vertices;
 	MaterialData material;
+	Node rootNode;
 };
+
+Node ReadNode(aiNode* node) {
+	Node result;
+	aiMatrix4x4 aiLocalMatrix = node->mTransformation; // nodeのlocalMatrixを取得
+	aiLocalMatrix.Transpose(); // 列ベクトル形式を行ベクトル形式に転置
+	for (uint32_t i =0 ; i < 4; i++) {
+		for (uint32_t j = 0; j < 4; j++) {
+			result.localMatrix.m[i][j] = aiLocalMatrix[i][j]; // 他の要素も
+		}
+	}
+	result.name = node->mName.C_Str(); // Node名を格納
+	result.children.resize(node->mNumChildren); // 子供の数だけ確保
+	for (uint32_t childIndex = 0; childIndex < node->mNumChildren; ++childIndex) {
+		// 再帰的に読んで階層構造を作っていく
+		result.children[childIndex] = ReadNode(node->mChildren[childIndex]);
+	}
+	return result;
+}
+
+
 
 struct  D3DResourceLeakchecker {
 	~D3DResourceLeakchecker()
@@ -422,13 +450,10 @@ MaterialData LoadMaterialTemplateFile(const std::string& directoryPath, const st
 }
 
 //モデルデータ読み込み
-ModelData LoadOdjFile(const std::string& directoryPath, const std::string& filename) {
+ModelData LoadModelFile(const std::string& directoryPath, const std::string& filename) {
 	//必要な変数の宣言とファイルを開く
 	ModelData modelData;//構築するModelData
-	std::vector<Vector4> positions; //位置
-	std::vector<Vector3> normals; //法線
-	std::vector<Vector2> texcoords; //テクスチャ座標
-	std::string line; //ファイルから読んだ1行を格納する
+
 
 	Assimp::Importer importer;
 	std::string filePach = directoryPath + "/" + filename;
@@ -449,7 +474,7 @@ ModelData LoadOdjFile(const std::string& directoryPath, const std::string& filen
 				aiVector3D& texcoord = mesh->mTextureCoords[0][vertexIndex];
 				VertexData vertex;
 				vertex.position = { position.x,position.y,position.z,1.0f };
-				vertex.normal = { normal.x,normal.y,normal.y };
+				vertex.normal = { normal.x,normal.y,normal.z };
 				vertex.texcoord = { texcoord.x,texcoord.y };
 
 				// aiProcess_MakeLeftHandedはz*=-1で、右手->左手に変換するので手動で対応
@@ -469,7 +494,7 @@ ModelData LoadOdjFile(const std::string& directoryPath, const std::string& filen
 		}
 	}
 
-	
+	modelData.rootNode = ReadNode(scene->mRootNode);
 
 	return modelData;
 };
@@ -1433,7 +1458,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 	//モデル読み込み
-	ModelData modeldata = LoadOdjFile("resources", "terrain.obj");
+	ModelData modeldata = LoadModelFile("./resources", "plane.gltf");
 
 	//頂点リソースを作る
 	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResourceObj = CreateBufferResource(device, sizeof(VertexData) * modeldata.vertices.size());
@@ -1739,7 +1764,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
 			//ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
 			//ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
-			//ImGui::DragFloat3("TranslateObj ", &transform.translate.x ,0.1f);
+			ImGui::DragFloat3("TranslateObj translate", &transform.translate.x ,0.1f);
+			ImGui::DragFloat3("TranslateObj rotate", &transform.rotate.x ,0.1f);
 			//ImGui::DragFloat3("Ttransform ", &Ttransform.translate.x ,0.1f);
 			//ImGui::DragFloat3("RotateObj", &transform.rotate.x ,0.1f);
 			//ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
@@ -1761,8 +1787,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			// 台地のワールド行列とWVP行列
 			Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transform.scale, transform.rotate, transform.translate);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-			transformationMatrixData->World = worldMatrix;
-			transformationMatrixData->WVP = worldViewProjectionMatrix;
+			transformationMatrixData->World = Multiply(modeldata.rootNode.localMatrix , worldMatrix);
+			transformationMatrixData->WVP = Multiply(modeldata.rootNode.localMatrix , worldViewProjectionMatrix);
 
 			// カメラの位置を設定
 			cameraData->worldPosition = cameraTransform.translate;
@@ -1892,16 +1918,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			// ------球------
 
 //			ルートパラメータの設定
-			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSphar->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSphar->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
 
-			// 形状データの設定
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphar);
-			commandList->IASetIndexBuffer(&indexBufferViewSphar);
+			//// 形状データの設定
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphar);
+			//commandList->IASetIndexBuffer(&indexBufferViewSphar);
 
-			// 描画コマンド
-			commandList->DrawIndexedInstanced(indexSphar6, 1, 0, 0, 0);
+			//// 描画コマンド
+			//commandList->DrawIndexedInstanced(indexSphar6, 1, 0, 0, 0);
 
 
 			// ------台地------

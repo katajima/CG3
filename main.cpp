@@ -117,6 +117,19 @@ struct PointLight {
 	float padding[2];
 };
 
+struct SpotLight
+{
+	Vector4 color; //ライト色
+	Vector3 position; // ライト位置
+	float intensity; //輝度
+	Vector3 direction; //!< ライトの向き
+	float distance; //!< ライト届く距離
+	float decay; //!< 減衰率 
+	float cosAngle; //!< スポットライトの余弦
+	float cosFalloffStart;
+	float padding[2];
+};
+
 //モデルデータ
 struct ModelData
 {
@@ -859,7 +872,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	// RootParameter作成。複数指定できるのではい
-	D3D12_ROOT_PARAMETER rootParameters[6] = {};
+	D3D12_ROOT_PARAMETER rootParameters[7] = {};
 
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;   // CBVを使う　// b0のbと一致する
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; //PixelShaderで使う
@@ -885,6 +898,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[5].Descriptor.ShaderRegister = 3;
+	
+	rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[6].Descriptor.ShaderRegister = 4;
 
 	descriptionSignature.pParameters = rootParameters;
 	descriptionSignature.NumParameters = _countof(rootParameters);
@@ -1103,6 +1120,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 
 #pragma endregion //PointLight用のResource
+
+	////------SpotLight用のReleaseを作る------////
+
+#pragma region MyRegion
+
+//平行光源用のリソースを作る
+	Microsoft::WRL::ComPtr < ID3D12Resource> spotLightResource = CreateBufferResource(device, sizeof(SpotLight));
+
+
+	SpotLight* spotLightData = nullptr;
+
+	spotLightResource->Map(0, nullptr, reinterpret_cast<void**>(&spotLightData));
+
+
+	//今回は赤を書き込んで見る //白
+	*spotLightData = SpotLight({ 1.0f,1.0f,1.0f,1.0f }, { 2.0f,1.25f,0.0f }, 7.0f, Nomalize({ -1.0f,-1.0f,0.0f }),4.0f,2.0f,std::cos(std::numbers::pi_v<float>/3.0f),1.0f);
+	//spotLightData->
+
+#pragma endregion //SpotLight用のResource
 
 	////------Material用のResourceを作る------////
 
@@ -1666,6 +1702,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	const float kDeltaTime = 1.0f / 60.0f;
 	//
 	directionalLightData->intensity = 0;
+	
+	pointLightData->intensity = 0;
 	pointLightData->position = { 0,0.2f,0 };
 	pointLightData->radius = 4.1f;
 	pointLightData->decay = 1.6f;
@@ -1710,6 +1748,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::DragFloat("pointLightData Intensity", &pointLightData->intensity,0.01f);
 			ImGui::DragFloat("pointLightData Radius", &pointLightData->radius,0.01f);
 			ImGui::DragFloat("pointLightData Decay", &pointLightData->decay,0.01f);
+			ImGui::DragFloat3("spotLightData Position", &spotLightData->position.x,0.1f);
+			ImGui::DragFloat3("spotLightData Direction", &spotLightData->direction.x,0.1f);
+			spotLightData->direction = Nomalize(spotLightData->direction);
+			ImGui::DragFloat("spotLightData Intensity", &spotLightData->intensity,0.01f);
+			ImGui::DragFloat("spotLightData Distance", &spotLightData->distance,0.01f);
+			ImGui::DragFloat("spotLightData Decay", &spotLightData->decay,0.01f);
+			ImGui::DragFloat("spotLightData cosAngle", &spotLightData->cosAngle,0.01f);
+			ImGui::DragFloat("spotLightData cosFalloffStart", &spotLightData->cosFalloffStart,0.01f);
+			
+			
+			
 			ImGui::ColorEdit4("color", &materialData->color.x);
 			ImGui::DragFloat("shininess", &materialData->shininess,0.01f);
 			//ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
@@ -1843,6 +1892,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			////------ポイントライト用------////
 
 			commandList->SetGraphicsRootConstantBufferView(5, pointLightResource->GetGPUVirtualAddress());
+
+			////------スポットライト用------////
+
+			commandList->SetGraphicsRootConstantBufferView(6, spotLightResource->GetGPUVirtualAddress());
 
 			////------平行光源用------////
 

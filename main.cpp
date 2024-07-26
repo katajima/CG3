@@ -13,6 +13,8 @@
 #include<wrl.h>
 #include<random>
 #include<numbers>
+#include <d3dcompiler.h>
+#include <algorithm> // copy_n を使うためのインクルード
 
 #include"externals/DirectXTex/DirectXTex.h"
 #include"externals/DirectXTex/d3dx12.h"
@@ -922,9 +924,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	//シリアライズにしてバイナリする
-	ID3DBlob* signatureBlob = nullptr;
-	ID3DBlob* errorBlob = nullptr;
-
+	Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob = nullptr;
+	Microsoft::WRL::ComPtr<ID3DBlob> errorBlob = nullptr;
 	hr = D3D12SerializeRootSignature(&descriptionSignature,
 		D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 
@@ -1021,7 +1022,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	assert(pixelShaderBlob != nullptr);
 
+	IDxcBlob* gsBlob = CompileShader(L"BasicGeometryShader.hlsl",
+		L"gs_6_0", dxcUtils, dxcCompiler, includeHandler);
+
+	assert(gsBlob != nullptr);
+
 #pragma endregion//Shaderをコンパイルする
+
+	
+
 
 	// PSOを作成する
 #pragma region graphicsPipelineStateDesc
@@ -1034,9 +1043,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(),
 	vertexShaderBlob->GetBufferSize() }; // VertexShader
-
+	//graphicsPipelineStateDesc.VS =D3DX12_SHADER_BYTECODE(vertexShaderBlob)
+	
 	graphicsPipelineStateDesc.PS = { pixelShaderBlob->GetBufferPointer(),
 	pixelShaderBlob->GetBufferSize() }; // PixelShader
+
+	
+	graphicsPipelineStateDesc.GS = { gsBlob->GetBufferPointer(),
+	gsBlob->GetBufferSize() }; // GeometryShader
+
 
 	graphicsPipelineStateDesc.BlendState = blendDesc; //BlendState
 

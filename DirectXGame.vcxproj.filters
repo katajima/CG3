@@ -16,6 +16,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{eae45c1f-a439-4bcf-aee0-54ea248b20e0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="シェーダーファイル">
+      <UniqueIdentifier>{b566c551-409b-40dc-921b-c3cd4f5885c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -48,14 +51,35 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
-    <None Include="Object3d.hlsli" />
-    <None Include="Particle.hlsli" />
+    <None Include="BasicShaderHeader.hlsli">
+      <Filter>シェーダーファイル</Filter>
+    </None>
+    <None Include="Object3d.hlsli">
+      <Filter>シェーダーファイル</Filter>
+    </None>
+    <None Include="Particle.hlsli">
+      <Filter>シェーダーファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Object3d.VS.hlsl" />
-    <FxCompile Include="Object3d.PS.hlsl" />
-    <FxCompile Include="Particle.PS.hlsl" />
-    <FxCompile Include="Particle.VS.hlsl" />
+    <FxCompile Include="BasicGeometryShader.hlsl">
+      <Filter>シェーダーファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="BasicPixelShader.hlsl">
+      <Filter>シェーダーファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Object3d.PS.hlsl">
+      <Filter>シェーダーファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Object3d.VS.hlsl">
+      <Filter>シェーダーファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Particle.PS.hlsl">
+      <Filter>シェーダーファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Particle.VS.hlsl">
+      <Filter>シェーダーファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui.h">

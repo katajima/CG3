@@ -1,9 +1,9 @@
 #include"BasicShaderHeader.hlsli" 
 
-//struct BasicPixelShaderOutput
-//{
-//    float32_t4 color : SV_TARGET0;
-//};
+struct BasicPixelShaderOutput
+{
+    float32_t4 color : SV_TARGET0;
+};
 
 float4 main(GSOutput input) : SV_TARGET
 {

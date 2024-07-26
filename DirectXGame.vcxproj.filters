@@ -51,9 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
-    <None Include="BasicShaderHeader.hlsli">
-      <Filter>シェーダーファイル</Filter>
-    </None>
     <None Include="Object3d.hlsli">
       <Filter>シェーダーファイル</Filter>
     </None>
@@ -63,9 +60,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="BasicGeometryShader.hlsl">
-      <Filter>シェーダーファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="BasicPixelShader.hlsl">
       <Filter>シェーダーファイル</Filter>
     </FxCompile>
     <FxCompile Include="Object3d.PS.hlsl">

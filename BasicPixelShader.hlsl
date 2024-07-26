@@ -1,4 +1,4 @@
-#include"BasicShaderHeader.hlsli" 
+#include"Object3d.hlsli" 
 
 float4 main(GSOutput input) : SV_TARGET
 {

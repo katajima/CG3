@@ -1,17 +1,29 @@
 #include"Object3d.hlsli" 
-[maxvertexcount(3)]
+[maxvertexcount(6)]
 void main(
 	triangle VertexShaderOutput input[3],
 	inout TriangleStream<GSOutput> output
 )
 {
-	for (uint i = 0; i < 3; i++)
-	{
-		GSOutput element;
-		element.svpos = input[i].position;
+   
+    for (uint j = 0; j < 3; j++)
+    {
+        GSOutput element;
+        element.svpos = input[j].position;
+        element.normal = input[j].nomal;
+        element.uv = input[j].texcoord;
+        element.worldPosition = input[j].worldPosition;
+        output.Append(element);
+    }
+    output.RestartStrip();
+    for (uint i = 0; i < 3; i++)
+    {
+        GSOutput element;
+        element.svpos = input[i].position + float4(20.0f, 0.0f, 0.0f, 0.0f);
         element.normal = input[i].nomal;
-        element.uv = input[i].texcoord;
+        element.uv = input[i].texcoord * 5.0f;
         element.worldPosition = input[i].worldPosition;
-		output.Append(element);
-	}
+        output.Append(element);
+        
+    }
 }

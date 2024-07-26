@@ -1877,6 +1877,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			//指定した色で画面全体をクリアする
 			float clearColor[] = { 0.1f,0.25,0.5f,1.0f };  //青っぽい色。RGBAの順 
+			//float clearColor[] = { 0.0f,0.0,0.0f,1.0f };  //青っぽい色。RGBAの順 
 
 			commandList->ClearRenderTargetView(rtvHandles[backBufferInbex], clearColor, 0, nullptr);
 

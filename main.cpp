@@ -151,7 +151,7 @@ Node ReadNode(aiNode* node) {
 	Node result;
 	aiMatrix4x4 aiLocalMatrix = node->mTransformation; // nodeのlocalMatrixを取得
 	aiLocalMatrix.Transpose(); // 列ベクトル形式を行ベクトル形式に転置
-	for (uint32_t i =0 ; i < 4; i++) {
+	for (uint32_t i = 0; i < 4; i++) {
 		for (uint32_t j = 0; j < 4; j++) {
 			result.localMatrix.m[i][j] = aiLocalMatrix[i][j]; // 他の要素も
 		}
@@ -1029,7 +1029,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion//Shaderをコンパイルする
 
-	
+
 
 
 	// PSOを作成する
@@ -1044,11 +1044,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(),
 	vertexShaderBlob->GetBufferSize() }; // VertexShader
 	//graphicsPipelineStateDesc.VS =D3DX12_SHADER_BYTECODE(vertexShaderBlob)
-	
+
 	graphicsPipelineStateDesc.PS = { pixelShaderBlob->GetBufferPointer(),
 	pixelShaderBlob->GetBufferSize() }; // PixelShader
 
-	
+
 	graphicsPipelineStateDesc.GS = { gsBlob->GetBufferPointer(),
 	gsBlob->GetBufferSize() }; // GeometryShader
 
@@ -1063,7 +1063,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//利用するトロポジ(形状)のタイプ。三角形
 	graphicsPipelineStateDesc.PrimitiveTopologyType =
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
 
 	//どのように画面に色を打ち込むかの設定(気にしなくて良い)
 	graphicsPipelineStateDesc.SampleDesc.Count = 1;
@@ -1290,34 +1290,63 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexResource->Map(0, nullptr,
 		reinterpret_cast<void**>(&vertexData));
 	//左下
-	vertexData[0].position = { -0.5f,-0.5f,0.0f,1.0f };
-	vertexData[0].texcoord = { 0.0f,1.0f };
-	vertexData[0].normal = { vertexData[0].position.x,vertexData[0].position.y,vertexData[0].position.z };
-	//上
-	vertexData[1].position = { 0.0f,0.5f,0.0f,1.0f };
-	vertexData[1].texcoord = { 0.5f,0.0f };
-	vertexData[1].normal = { vertexData[1].position.x,vertexData[1].position.y,vertexData[1].position.z };
-	//右下
-	vertexData[2].position = { 0.5f,-0.5f,0.0f,1.0f };
-	vertexData[2].texcoord = { 1.0f,1.0f };
-	vertexData[2].normal = { vertexData[2].position.x,vertexData[2].position.y,vertexData[2].position.z };
-	//左下２
-	vertexData[3].position = { -0.5f,-0.5f,0.5f,1.0f };
-	vertexData[3].texcoord = { 0.0f,1.0f };
-	vertexData[3].normal = { vertexData[3].position.x,vertexData[3].position.y,vertexData[3].position.z };
+	//vertexData[0].position = { -0.5f,-0.5f,0.0f,1.0f };
+	//vertexData[0].texcoord = { 0.0f,1.0f };
+	//vertexData[0].normal = { vertexData[0].position.x,vertexData[0].position.y,vertexData[0].position.z };
+	////上
+	//vertexData[1].position = { 0.0f,0.5f,0.0f,1.0f };
+	//vertexData[1].texcoord = { 0.5f,0.0f };
+	//vertexData[1].normal = { vertexData[1].position.x,vertexData[1].position.y,vertexData[1].position.z };
+	////右下
+	//vertexData[2].position = { 0.5f,-0.5f,0.0f,1.0f };
+	//vertexData[2].texcoord = { 1.0f,1.0f };
+	//vertexData[2].normal = { vertexData[2].position.x,vertexData[2].position.y,vertexData[2].position.z };
+	////左下２
+	//vertexData[3].position = { -0.5f,-0.5f,0.5f,1.0f };
+	//vertexData[3].texcoord = { 0.0f,1.0f };
+	//vertexData[3].normal = { vertexData[3].position.x,vertexData[3].position.y,vertexData[3].position.z };
 
-	//上２
-	vertexData[4].position = { 0.0f,0.0f,0.0f,1.0f };
-	vertexData[4].texcoord = { 0.5f,0.5f };
-	vertexData[4].normal = { vertexData[4].position.x,vertexData[4].position.y,vertexData[4].position.z };
+	////上２
+	//vertexData[4].position = { 0.0f,0.0f,0.0f,1.0f };
+	//vertexData[4].texcoord = { 0.5f,0.5f };
+	//vertexData[4].normal = { vertexData[4].position.x,vertexData[4].position.y,vertexData[4].position.z };
 
-	//右下２
-	vertexData[5].position = { 0.5f,-0.5f,-0.5f,1.0f };
-	vertexData[5].texcoord = { 1.0f,1.0f };
-	vertexData[5].normal = { vertexData[5].position.x,vertexData[5].position.y,vertexData[5].position.z };
+	////右下２
+	//vertexData[5].position = { 0.5f,-0.5f,-0.5f,1.0f };
+	//vertexData[5].texcoord = { 1.0f,1.0f };
+	//vertexData[5].normal = { vertexData[5].position.x,vertexData[5].position.y,vertexData[5].position.z };
 
+	vertexData[0] = {
+		{ -0.5f,-0.5f,0.0f,1.0f } ,{ 0.0f,1.0f },{ vertexData[0].position.x,vertexData[0].position.y,vertexData[0].position.z },
+	};
 
 #pragma endregion //三角形
+
+#pragma region Index
+
+	//index用のあれやこれを作る
+	Microsoft::WRL::ComPtr < ID3D12Resource> indexResource = CreateBufferResource(device, sizeof(uint32_t) * 6);
+
+	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+
+	// リソースの先頭のアドレスから使う
+	indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
+
+	// 使用するリソースのサイズはインデック6つ分のサイズ
+	indexBufferView.SizeInBytes = sizeof(uint32_t) * 6;
+
+	// インデックはuint32_tとする
+	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+
+
+	// インデックリソースにデータを書き込む
+	uint32_t* indexData = nullptr;
+	indexResource->Map(0, nullptr, reinterpret_cast<void**>(&indexData));
+	indexData[0] = 0;		indexData[1] = 1;		indexData[2] = 2;
+	indexData[3] = 1;		indexData[4] = 3;		indexData[5] = 2;
+
+
+#pragma endregion //スプライトindex用
 
 #pragma endregion //Matrix用_Resource
 
@@ -1779,8 +1808,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
 			//ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
 			//ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
-			ImGui::DragFloat3("TranslateObj translate", &transform.translate.x ,0.1f);
-			ImGui::DragFloat3("TranslateObj rotate", &transform.rotate.x ,0.1f);
+			ImGui::DragFloat3("TranslateObj translate", &transform.translate.x, 0.1f);
+			ImGui::DragFloat3("TranslateObj rotate", &transform.rotate.x, 0.1f);
 			//ImGui::DragFloat3("Ttransform ", &Ttransform.translate.x ,0.1f);
 			//ImGui::DragFloat3("RotateObj", &transform.rotate.x ,0.1f);
 			//ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
@@ -1802,8 +1831,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			// 台地のワールド行列とWVP行列
 			Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transform.scale, transform.rotate, transform.translate);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-			transformationMatrixData->World = Multiply(modeldata.rootNode.localMatrix , worldMatrix);
-			transformationMatrixData->WVP = Multiply(modeldata.rootNode.localMatrix , worldViewProjectionMatrix);
+			transformationMatrixData->World = Multiply(modeldata.rootNode.localMatrix, worldMatrix);
+			transformationMatrixData->WVP = Multiply(modeldata.rootNode.localMatrix, worldViewProjectionMatrix);
 
 			// カメラの位置を設定
 			cameraData->worldPosition = cameraTransform.translate;
@@ -1903,7 +1932,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetPipelineState(graphicsPipelineState.Get()); //PSOを設定
 
 			//形状を設定。PSOに設定している物とはまた別。同じものを設定すると考えておけば良い
-			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 
 
 			////------ポイントライト用------////
@@ -1947,26 +1976,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 			// ------台地------
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU3);
-			// ルートパラメータの設定
-			commandList->SetGraphicsRootConstantBufferView(0, materialResourceObj->GetGPUVirtualAddress());
-			//トランスフォームMatrixResource
-			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
-			//vertexBufferViewSprite
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewObj); //VBVを設定
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU3);
+			//// ルートパラメータの設定
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResourceObj->GetGPUVirtualAddress());
+			////トランスフォームMatrixResource
+			//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
+			////vertexBufferViewSprite
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewObj); //VBVを設定
 
-			commandList->DrawInstanced(UINT(modeldata.vertices.size()), 1, 0, 0);
+			//commandList->DrawInstanced(UINT(modeldata.vertices.size()), 1, 0, 0);
 
 
 
-			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-			//commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
-			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
-			//// wvp用のCBufferの場所を設定
-			//commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+			// wvp用のCBufferの場所を設定
+			commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
 
-			////描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
-			//commandList->DrawInstanced(6, 1, 0, 0);
+			//描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
+			commandList->DrawInstanced(6, 1, 0, 0);
 
 
 

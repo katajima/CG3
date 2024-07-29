@@ -1179,6 +1179,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	*materialData = Material({ 1.0f, 1.0f, 1.0f, 1.0f }, { true }); //RGBA
 	materialData->uvTransform = MakeIdentity4x4();
 	materialData->shininess = 50.0f;
+	
 
 #pragma endregion //マテリアル用Resource
 
@@ -1289,36 +1290,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//書き込むためのアドレスを取得
 	vertexResource->Map(0, nullptr,
 		reinterpret_cast<void**>(&vertexData));
-	//左下
-	//vertexData[0].position = { -0.5f,-0.5f,0.0f,1.0f };
-	//vertexData[0].texcoord = { 0.0f,1.0f };
-	//vertexData[0].normal = { vertexData[0].position.x,vertexData[0].position.y,vertexData[0].position.z };
-	////上
-	//vertexData[1].position = { 0.0f,0.5f,0.0f,1.0f };
-	//vertexData[1].texcoord = { 0.5f,0.0f };
-	//vertexData[1].normal = { vertexData[1].position.x,vertexData[1].position.y,vertexData[1].position.z };
-	////右下
-	//vertexData[2].position = { 0.5f,-0.5f,0.0f,1.0f };
-	//vertexData[2].texcoord = { 1.0f,1.0f };
-	//vertexData[2].normal = { vertexData[2].position.x,vertexData[2].position.y,vertexData[2].position.z };
-	////左下２
-	//vertexData[3].position = { -0.5f,-0.5f,0.5f,1.0f };
-	//vertexData[3].texcoord = { 0.0f,1.0f };
-	//vertexData[3].normal = { vertexData[3].position.x,vertexData[3].position.y,vertexData[3].position.z };
 
-	////上２
-	//vertexData[4].position = { 0.0f,0.0f,0.0f,1.0f };
-	//vertexData[4].texcoord = { 0.5f,0.5f };
-	//vertexData[4].normal = { vertexData[4].position.x,vertexData[4].position.y,vertexData[4].position.z };
 
-	////右下２
-	//vertexData[5].position = { 0.5f,-0.5f,-0.5f,1.0f };
-	//vertexData[5].texcoord = { 1.0f,1.0f };
-	//vertexData[5].normal = { vertexData[5].position.x,vertexData[5].position.y,vertexData[5].position.z };
+	vertexData[0] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { vertexData[0].position.x, vertexData[0].position.y, vertexData[0].position.z}};
+	//vertexData[1] = { { 1.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } };
+	//vertexData[2] = { { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } };
+	//vertexData[3] = { { 1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f } };
+	//vertexData[4] = { { 1.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 1.0f } };
+	//vertexData[5] = { { 0.0f, 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } };
 
-	vertexData[0] = {
-		{ -0.5f,-0.5f,0.0f,1.0f } ,{ 0.0f,1.0f },{ vertexData[0].position.x,vertexData[0].position.y,vertexData[0].position.z },
-	};
 
 #pragma endregion //三角形
 
@@ -1349,157 +1329,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion //スプライトindex用
 
 #pragma endregion //Matrix用_Resource
-
-
-#pragma region 球
-
-#pragma region transformationMatrix//球
-
-	////------transformationMatrixResourceSphar------////球用
-
-	Microsoft::WRL::ComPtr < ID3D12Resource> transformationMatrixResourceSphar = CreateBufferResource(device, sizeof(TransfomationMatrix));
-
-	//データを書き込む
-	TransfomationMatrix* transformationMatrixDataSphar = nullptr;
-
-	//書き込むためのアドレスを取得
-	transformationMatrixResourceSphar->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataSphar));
-
-	//単位行列を書き込んでおく
-	transformationMatrixDataSphar->World = MakeIdentity4x4();
-	transformationMatrixDataSphar->WVP = MakeIdentity4x4();
-	transformationMatrixDataSphar->worldInverseTranspose = MakeIdentity4x4();
-
-#pragma endregion
-
-
-#pragma region vertexResouce//球
-
-	float pi = 3.14f;
-	const uint32_t kSubdivision = 32; //分割数
-	const float kLonEvery = pi * 2 / float(kSubdivision);      //経度分割1つ分の角度φ
-	const float kLatEvery = pi / float(kSubdivision);      //緯度分割1つ分の角度θ
-	const float r = 0.5f;
-	const uint32_t vetexSphar4 = kSubdivision * kSubdivision * 4;
-
-	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResouceSphar
-		= CreateBufferResource(device, sizeof(VertexData) * vetexSphar4);
-
-	//頂点バッファビューを作成する
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSphar{};
-	//リソースの先頭のアドレスを作成する
-	vertexBufferViewSphar.BufferLocation = vertexResouceSphar->GetGPUVirtualAddress();
-	//使用するリソースのサイズは頂点6つの分のサイズ
-	vertexBufferViewSphar.SizeInBytes = sizeof(VertexData) * vetexSphar4;
-	//1頂点当たりのサイズ
-	vertexBufferViewSphar.StrideInBytes = sizeof(VertexData);
-
-	//頂点データを設定する
-	VertexData* vertexDataSphar = nullptr;
-	vertexResouceSphar->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSphar));
-
-
-	//　緯度の方向に分割　-π/2 ～ π/2
-	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
-		float lat = -pi / 2.0f + kLatEvery * latIndex;// 現在の緯度θ
-		//　経度の方向に分割　0 ～ 2π
-		//　頂点の方向に分割しながら線を描く
-		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
-			uint32_t start = (latIndex * kSubdivision + lonIndex) * 4; // θ
-			float lon = lonIndex * kLonEvery; //φ
-
-			float u = float(lonIndex) / float(kSubdivision);
-			float v = 1.0f - float(latIndex) / float(kSubdivision);
-
-			//頂点データを入力する。基準点a
-			vertexDataSphar[start].position.x = r * std::cos(lat) * std::cos(lon);
-			vertexDataSphar[start].position.y = r * std::sin(lat);
-			vertexDataSphar[start].position.z = r * std::cos(lat) * std::sin(lon);
-			vertexDataSphar[start].position.w = 1.0f;
-			vertexDataSphar[start].texcoord = { u,v + (1.0f / float(kSubdivision - 1)) };
-			vertexDataSphar[start].normal.x = vertexDataSphar[start].position.x;
-			vertexDataSphar[start].normal.y = vertexDataSphar[start].position.y;
-			vertexDataSphar[start].normal.z = vertexDataSphar[start].position.z;
-
-			////基準点b
-			vertexDataSphar[start + 1].position.x = r * std::cos(lat + kLatEvery) * std::cos(lon);
-			vertexDataSphar[start + 1].position.y = r * std::sin(lat + kLatEvery);
-			vertexDataSphar[start + 1].position.z = r * std::cos(lat + kLatEvery) * std::sin(lon);
-			vertexDataSphar[start + 1].position.w = 1.0f;
-			vertexDataSphar[start + 1].texcoord = { u,v };
-			vertexDataSphar[start + 1].normal.x = vertexDataSphar[start + 1].position.x;
-			vertexDataSphar[start + 1].normal.y = vertexDataSphar[start + 1].position.y;
-			vertexDataSphar[start + 1].normal.z = vertexDataSphar[start + 1].position.z;
-
-
-			////基準点c
-			vertexDataSphar[start + 2].position.x = r * std::cos(lat) * std::cos(lon + kLonEvery);
-			vertexDataSphar[start + 2].position.y = r * std::sin(lat);
-			vertexDataSphar[start + 2].position.z = r * std::cos(lat) * std::sin(lon + kLonEvery);
-			vertexDataSphar[start + 2].position.w = 1.0f;
-			vertexDataSphar[start + 2].texcoord = { u + (1.0f / float(kSubdivision - 1)),v + (1.0f / float(kSubdivision - 1)) };
-			vertexDataSphar[start + 2].normal.x = vertexDataSphar[start + 2].position.x;
-			vertexDataSphar[start + 2].normal.y = vertexDataSphar[start + 2].position.y;
-			vertexDataSphar[start + 2].normal.z = vertexDataSphar[start + 2].position.z;
-
-
-			//基準点d
-			vertexDataSphar[start + 3].position.x = r * std::cos(lat + kLatEvery) * std::cos(lon + kLonEvery);
-			vertexDataSphar[start + 3].position.y = r * std::sin(lat + kLatEvery);
-			vertexDataSphar[start + 3].position.z = r * std::cos(lat + kLatEvery) * std::sin(lon + kLonEvery);
-			vertexDataSphar[start + 3].position.w = 1.0f;
-			vertexDataSphar[start + 3].texcoord = { u + (1.0f / float(kSubdivision - 1)),v };
-			vertexDataSphar[start + 3].normal.x = vertexDataSphar[start + 3].position.x;
-			vertexDataSphar[start + 3].normal.y = vertexDataSphar[start + 3].position.y;
-			vertexDataSphar[start + 3].normal.z = vertexDataSphar[start + 3].position.z;
-
-
-		}
-	}
-
-#pragma endregion //球体
-
-
-#pragma region Sphar
-
-	const uint32_t indexSphar6 = kSubdivision * kSubdivision * 6;
-
-	//index用のあれやこれを作る
-	Microsoft::WRL::ComPtr < ID3D12Resource> indexResourceSphar = CreateBufferResource(device, sizeof(uint32_t) * indexSphar6);
-
-	D3D12_INDEX_BUFFER_VIEW indexBufferViewSphar{};
-
-	// リソースの先頭のアドレスから使う
-	indexBufferViewSphar.BufferLocation = indexResourceSphar->GetGPUVirtualAddress();
-
-	// 使用するリソースのサイズはインデック6つ分のサイズ
-	indexBufferViewSphar.SizeInBytes = sizeof(uint32_t) * indexSphar6;
-
-	// インデックはuint32_tとする
-	indexBufferViewSphar.Format = DXGI_FORMAT_R32_UINT;
-
-
-	// インデックリソースにデータを書き込む
-	uint32_t* indexDataSphar = nullptr;
-	indexResourceSphar->Map(0, nullptr, reinterpret_cast<void**>(&indexDataSphar));
-	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
-		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
-			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6; // θ
-			uint32_t start2 = (latIndex * kSubdivision + lonIndex) * 4; // θ
-			indexDataSphar[start] = (start2 + 0);
-			indexDataSphar[start + 1] = (start2 + 1);
-			indexDataSphar[start + 2] = (start2 + 2);
-
-
-			indexDataSphar[start + 3] = (start2 + 1);
-			indexDataSphar[start + 4] = (start2 + 3);
-			indexDataSphar[start + 5] = (start2 + 2);
-		}
-	}
-
-#pragma endregion //球体インデックス
-
-#pragma endregion
 
 	//モデル読み込み
 	ModelData modeldata = LoadModelFile("./resources", "plane.gltf");
@@ -1696,9 +1525,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 	cameraTransform.translate = { 0,8,-20 };
 	cameraTransform.rotate.x = 0.3f;
-	//cameraTransform.translate.y = 5.0f;
-	//cameraTransform.translate.z = -10.0f;
-	//cameraTransform.rotate.x = 0.6f;
+
 
 
 	// CPUで動かす用のTransformを作る
@@ -1720,10 +1547,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,-3.14f,0.0f},{0.0f,0.0f,0.0f} };
-	//Transform Ttransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
-	//transformObj.translate.y = -1.0f;
-	//transformObj.translate.z = 5.0f;
-	//transform.rotate.y = 3.14f;
+
 	//UVTransform用
 	Transform uvTransformSphar{
 		{1.0f,1.0f,1.0f},
@@ -1745,7 +1569,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 
 	const float kDeltaTime = 1.0f / 60.0f;
 	//
-	directionalLightData->intensity = 0;
+	directionalLightData->intensity = 10;
 
 	pointLightData->intensity = 0;
 	pointLightData->position = { 0,0.2f,0 };
@@ -1821,40 +1645,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Matrix4x4 cameraMatrix = MakeAffineMatrixMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 
-			// 球のワールド行列とWVP行列
-			Matrix4x4 worldMatrixSphar = MakeAffineMatrixMatrix(transformSphar.scale, transformSphar.rotate, transformSphar.translate);
-			Matrix4x4 worldViewProjectionMatrixSphar = Multiply(worldMatrixSphar, Multiply(viewMatrix, projectionMatrix));
-			transformationMatrixDataSphar->World = worldMatrixSphar;
-			transformationMatrixDataSphar->WVP = worldViewProjectionMatrixSphar;
-			transformationMatrixDataSphar->worldInverseTranspose = Transpose(Inverse(worldMatrixSphar));
+
 
 			// 台地のワールド行列とWVP行列
+			//Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transform.scale, transform.rotate, transform.translate);
+			//Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+			//transformationMatrixData->World = Multiply(modeldata.rootNode.localMatrix, worldMatrix);
+			//transformationMatrixData->WVP = Multiply(modeldata.rootNode.localMatrix, worldViewProjectionMatrix);
+			
 			Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transform.scale, transform.rotate, transform.translate);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-			transformationMatrixData->World = Multiply(modeldata.rootNode.localMatrix, worldMatrix);
-			transformationMatrixData->WVP = Multiply(modeldata.rootNode.localMatrix, worldViewProjectionMatrix);
+			TtransformationMatrixData->World = worldMatrix;
+			TtransformationMatrixData->WVP = worldViewProjectionMatrix;
+			TtransformationMatrixData->worldInverseTranspose = Transpose(Inverse(worldMatrix));
 
 			// カメラの位置を設定
 			cameraData->worldPosition = cameraTransform.translate;
 
 
-			/*Matrix4x4 TworldMatrix = MakeAffineMatrixMatrix(Ttransform.scale, Ttransform.rotate, Ttransform.translate);
-			projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
-			Matrix4x4 TworldViewProjectionMatrix = Multiply(TworldMatrix, Multiply(viewMatrix, projectionMatrix));
-			TtransformationMatrixData->World = TworldViewProjectionMatrix;
-			TtransformationMatrixData->WVP = TworldViewProjectionMatrix;*/
-
-
-			//UVTransformMaterial//Obj
-			/*Matrix4x4 uvTransformMatrixObj = MakeScaleMatrix(uvTransformObj.scale);
-			uvTransformMatrixObj = Multiply(uvTransformMatrixObj, MakeRotateZMatrix(uvTransformObj.rotate.z));
-			uvTransformMatrixObj = Multiply(uvTransformMatrixObj, MakeTranslateMatrix(uvTransformObj.translate));
-			materialDataObj->uvTransform = uvTransformMatrixObj;
-
-			Matrix4x4 uvTransformMatrixSphar = MakeScaleMatrix(uvTransformSphar.scale);
-			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeRotateZMatrix(uvTransformSphar.rotate.z));
-			uvTransformMatrixSphar = Multiply(uvTransformMatrixSphar, MakeTranslateMatrix(uvTransformSphar.translate));
-			materialDataSphar->uvTransform = uvTransformMatrixSphar;*/
 
 
 
@@ -1962,17 +1770,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			// ------球------
 
-//			ルートパラメータの設定
-			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-			//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSphar->GetGPUVirtualAddress());
-			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
-
-			//// 形状データの設定
-			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphar);
-			//commandList->IASetIndexBuffer(&indexBufferViewSphar);
-
-			//// 描画コマンド
-			//commandList->DrawIndexedInstanced(indexSphar6, 1, 0, 0, 0);
 
 
 			// ------台地------
@@ -1990,12 +1787,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
 			// wvp用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
 
 			//描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
-			commandList->DrawInstanced(6, 1, 0, 0);
+			commandList->DrawInstanced(1, 1, 0, 0);
 
 
 

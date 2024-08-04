@@ -1522,8 +1522,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{ 0.0f,0.0f,0.0f },
 		{ 0.0f,0.0f,-10.0f }
 	};
-	cameraTransform.translate = { 0,8,-20 };
-	cameraTransform.rotate.x = 0.3f;
+	cameraTransform.translate = { 0,0,-5 };
+	cameraTransform.rotate.x = 0.0f;
 
 
 
@@ -1610,7 +1610,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			ImGui::Begin("Window");
 			ImGui::DragFloat3("camera.translate.x", &cameraTransform.translate.x, 0.1f);
-			ImGui::SliderFloat3("camera.rotate", &cameraTransform.rotate.x, -3.14f, 3.14f);
+			ImGui::DragFloat3("camera.rotate", &cameraTransform.rotate.x, 0.01f);
 			ImGui::DragFloat3("Translate translate", &transform.translate.x, 0.1f);
 			ImGui::DragFloat3("Translate rotate", &transform.rotate.x, 0.1f);
 			ImGui::DragInt("enableLighting", &materialData->enableLighting);

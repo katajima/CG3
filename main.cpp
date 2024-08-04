@@ -1178,7 +1178,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//今回は赤を書き込んで見る //白
 	*materialData = Material({ 1.0f, 1.0f, 1.0f, 1.0f }, { true }); //RGBA
 	materialData->uvTransform = MakeIdentity4x4();
+	materialData->enableLighting = 0;
 	materialData->shininess = 50.0f;
+	materialData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
 	
 
 #pragma endregion //マテリアル用Resource
@@ -1543,7 +1545,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	// CPUで動かす用のTransformを作る
-	Transform transformSphar{ {1.0f,1.0f,1.0f},{0.0f,-3.14f,0.0f},{0.0f,0.0f,0.0f} };
+	//Transform transformSphar{ {1.0f,1.0f,1.0f},{0.0f,-3.14f,0.0f},{0.0f,0.0f,0.0f} };
 
 
 	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,-3.14f,0.0f},{0.0f,0.0f,0.0f} };
@@ -1555,6 +1557,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.0f,0.0f,0.0f},
 	};
 	Transform uvTransformObj{
+		{1.0f,1.0f,1.0f},
+		{0.0f,0.0f,0.0f},
+		{0.0f,0.0f,0.0f},
+	};	Transform uvTransform{
 		{1.0f,1.0f,1.0f},
 		{0.0f,0.0f,0.0f},
 		{0.0f,0.0f,0.0f},
@@ -1588,7 +1594,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-	materialData->enableLighting = true;
+	//materialData->enableLighting = true;
 	MSG msg{};
 	//ウィンドウの×ボタンが押されるまでループ
 	while (msg.message != WM_QUIT) {
@@ -1608,9 +1614,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::Begin("Window");
 			ImGui::DragFloat3("camera.translate.x", &cameraTransform.translate.x, 0.1f);
 			ImGui::SliderFloat3("camera.rotate", &cameraTransform.rotate.x, -3.14f, 3.14f);
+			ImGui::DragFloat3("Translate translate", &transform.translate.x, 0.1f);
+			ImGui::DragFloat3("Translate rotate", &transform.rotate.x, 0.1f);
 			ImGui::DragInt("enableLighting", &materialData->enableLighting);
-			ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
-			ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
+			ImGui::DragFloat3("directionalLightData direction", &directionalLightData->direction.x);
+			ImGui::DragFloat("directionalLightData Intensity", &directionalLightData->intensity, 0.01f);
 			directionalLightData->direction = Nomalize(directionalLightData->direction);
 			ImGui::DragFloat3("pointLightData Position", &pointLightData->position.x, 0.1f);
 			ImGui::DragFloat("pointLightData Intensity", &pointLightData->intensity, 0.01f);
@@ -1624,21 +1632,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::DragFloat("spotLightData Decay", &spotLightData->decay, 0.01f);
 			ImGui::DragFloat("spotLightData cosAngle", &spotLightData->cosAngle, 0.01f);
 			ImGui::DragFloat("spotLightData cosFalloffStart", &spotLightData->cosFalloffStart, 0.01f);
-
-
+			
 
 			ImGui::ColorEdit4("color", &materialData->color.x);
 			ImGui::DragFloat("shininess", &materialData->shininess, 0.01f);
 			//ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
 			//ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
 			//ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
-			ImGui::DragFloat3("TranslateObj translate", &transform.translate.x, 0.1f);
-			ImGui::DragFloat3("TranslateObj rotate", &transform.rotate.x, 0.1f);
 			//ImGui::DragFloat3("Ttransform ", &Ttransform.translate.x ,0.1f);
 			//ImGui::DragFloat3("RotateObj", &transform.rotate.x ,0.1f);
-			//ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
-			//ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
-			//ImGui::SliderAngle("UVRotate", &uvTransformSphar.rotate.z);
+			ImGui::DragFloat2("UVTranslate", &uvTransform.translate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat2("UVScale", &uvTransform.scale.x, 0.1f, -10.0f, 10.0f);
+			ImGui::SliderAngle("UVRotate", &uvTransform.rotate.z);
 			ImGui::End();
 
 			// カメラ行列
@@ -1664,7 +1669,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-
+			//UVTransformMaterial//
+			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransform.scale);
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransform.rotate.z));
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransform.translate));
+			materialData->uvTransform = uvTransformMatrix;
 
 
 
@@ -1784,10 +1793,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//commandList->DrawInstanced(UINT(modeldata.vertices.size()), 1, 0, 0);
 
 
-
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU3);
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
 			// wvp用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
 

@@ -136,10 +136,11 @@ PixelShaderOutput main(GSOutput input)
         
         
         
-        output.color.rgb = 
-        diffuseDirectionalLight + specularDirectionalLight + 
-        diffusePointLight + specularPointLight + 
-        diffuseSpotLight + specularSpotLight;
+        output.color.rgb =
+        diffuseDirectionalLight + specularDirectionalLight +
+       diffusePointLight + specularPointLight + 
+       diffuseSpotLight + specularSpotLight;
+        
         output.color.a = gMaterial.color.a * textureColor.a;
 
         if (textureColor.a <= 0.5f)

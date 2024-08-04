@@ -75,9 +75,6 @@ struct CameraGPU {
 struct VertexData {
 
 	Vector4 position;
-	Vector2 texcoord;
-	Vector3 normal;
-
 };
 
 struct Material {
@@ -476,12 +473,12 @@ ModelData LoadModelFile(const std::string& directoryPath, const std::string& fil
 				aiVector3D& texcoord = mesh->mTextureCoords[0][vertexIndex];
 				VertexData vertex;
 				vertex.position = { position.x,position.y,position.z,1.0f };
-				vertex.normal = { normal.x,normal.y,normal.z };
-				vertex.texcoord = { texcoord.x,texcoord.y };
+				//vertex.normal = { normal.x,normal.y,normal.z };
+				//vertex.texcoord = { texcoord.x,texcoord.y };
 
 				// aiProcess_MakeLeftHandedはz*=-1で、右手->左手に変換するので手動で対応
 				vertex.position.x *= -1.0f;
-				vertex.normal.x *= -1.0f;
+				//vertex.normal.x *= -1.0f;
 				modelData.vertices.push_back(vertex);
 			}
 		}
@@ -956,14 +953,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	inputElementDescs[0].SemanticIndex = 0;
 	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	inputElementDescs[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-	inputElementDescs[1].SemanticName = "TEXCOORD";
-	inputElementDescs[1].SemanticIndex = 0;
-	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-	inputElementDescs[2].SemanticName = "NORMAL";
-	inputElementDescs[2].SemanticIndex = 0;
-	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+	
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
@@ -1294,7 +1284,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		reinterpret_cast<void**>(&vertexData));
 
 
-	vertexData[0] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { vertexData[0].position.x, vertexData[0].position.y, vertexData[0].position.z}};
+	vertexData[0] = { { 0.0f, 0.0f, 0.0f, 1.0f }};
 	//vertexData[1] = { { 1.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } };
 	//vertexData[2] = { { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } };
 	//vertexData[3] = { { 1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f } };

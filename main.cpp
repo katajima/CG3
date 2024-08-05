@@ -1237,6 +1237,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	////------transformationMatrixResource------////OBJ
 
+	//Microsoft::WRL::ComPtr < ID3D12Resource> transformationMatrixResource = CreateBufferResource(device, sizeof(TransfomationMatrix));
+
+	////データを書き込む
+	//TransfomationMatrix* transformationMatrixData = nullptr;
+
+	////書き込むためのアドレスを取得
+	//transformationMatrixResource->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixData));
+
+	////単位行列を書き込んでおく
+	//transformationMatrixData->WVP = MakeIdentity4x4();
+	//transformationMatrixData->World = MakeIdentity4x4();
+	//transformationMatrixData->worldInverseTranspose = MakeIdentity4x4();
+
+#pragma region Matrix_Resource
+
+#pragma region MyRegion
+
 	Microsoft::WRL::ComPtr < ID3D12Resource> transformationMatrixResource = CreateBufferResource(device, sizeof(TransfomationMatrix));
 
 	//データを書き込む
@@ -1250,25 +1267,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	transformationMatrixData->World = MakeIdentity4x4();
 	transformationMatrixData->worldInverseTranspose = MakeIdentity4x4();
 
-#pragma region Matrix_Resource
-
-#pragma region MyRegion
-
-	Microsoft::WRL::ComPtr < ID3D12Resource> TtransformationMatrixResource = CreateBufferResource(device, sizeof(TransfomationMatrix));
-
-	//データを書き込む
-	TransfomationMatrix* TtransformationMatrixData = nullptr;
-
-	//書き込むためのアドレスを取得
-	TtransformationMatrixResource->Map(0, nullptr, reinterpret_cast<void**>(&TtransformationMatrixData));
-
-	//単位行列を書き込んでおく
-	TtransformationMatrixData->WVP = MakeIdentity4x4();
-	TtransformationMatrixData->World = MakeIdentity4x4();
-
 	////------VertexResourceを生成する------////
 
-	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResource = CreateBufferResource(device, sizeof(VertexData) * 6);
+	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResource = CreateBufferResource(device, sizeof(VertexData));
 
 	//頂点バッファビューを作成する
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
@@ -1277,7 +1278,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
 
 	//使用するリソースのサイズは頂点3つ分のサイズ
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 6;
+	vertexBufferView.SizeInBytes = sizeof(VertexData);
 
 	// 1頂点あたりのサイズ
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
@@ -1303,26 +1304,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region Index
 
-	//index用のあれやこれを作る
-	Microsoft::WRL::ComPtr < ID3D12Resource> indexResource = CreateBufferResource(device, sizeof(uint32_t) * 6);
+	////index用のあれやこれを作る
+	//Microsoft::WRL::ComPtr < ID3D12Resource> indexResource = CreateBufferResource(device, sizeof(uint32_t) * 6);
 
-	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+	//D3D12_INDEX_BUFFER_VIEW indexBufferView{};
 
-	// リソースの先頭のアドレスから使う
-	indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
+	//// リソースの先頭のアドレスから使う
+	//indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
 
-	// 使用するリソースのサイズはインデック6つ分のサイズ
-	indexBufferView.SizeInBytes = sizeof(uint32_t) * 6;
+	//// 使用するリソースのサイズはインデック6つ分のサイズ
+	//indexBufferView.SizeInBytes = sizeof(uint32_t) * 6;
 
-	// インデックはuint32_tとする
-	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	//// インデックはuint32_tとする
+	//indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 
-	// インデックリソースにデータを書き込む
-	uint32_t* indexData = nullptr;
-	indexResource->Map(0, nullptr, reinterpret_cast<void**>(&indexData));
-	indexData[0] = 0;		indexData[1] = 1;		indexData[2] = 2;
-	indexData[3] = 1;		indexData[4] = 3;		indexData[5] = 2;
+	//// インデックリソースにデータを書き込む
+	//uint32_t* indexData = nullptr;
+	//indexResource->Map(0, nullptr, reinterpret_cast<void**>(&indexData));
+	//indexData[0] = 0;		indexData[1] = 1;		indexData[2] = 2;
+	//indexData[3] = 1;		indexData[4] = 3;		indexData[5] = 2;
 
 
 #pragma endregion //スプライトindex用
@@ -1647,6 +1648,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Matrix4x4 cameraMatrix = MakeAffineMatrixMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 
+			Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transform.scale, transform.rotate, transform.translate);
+			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+			transformationMatrixData->World = worldMatrix;
+			transformationMatrixData->WVP = worldViewProjectionMatrix;
+			transformationMatrixData->worldInverseTranspose = Transpose(Inverse(worldMatrix));
 
 
 			// 台地のワールド行列とWVP行列
@@ -1655,11 +1661,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//transformationMatrixData->World = Multiply(modeldata.rootNode.localMatrix, worldMatrix);
 			//transformationMatrixData->WVP = Multiply(modeldata.rootNode.localMatrix, worldViewProjectionMatrix);
 			
-			Matrix4x4 worldMatrix = MakeAffineMatrixMatrix(transform.scale, transform.rotate, transform.translate);
-			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-			TtransformationMatrixData->World = worldMatrix;
-			TtransformationMatrixData->WVP = worldViewProjectionMatrix;
-			TtransformationMatrixData->worldInverseTranspose = Transpose(Inverse(worldMatrix));
 
 			// カメラの位置を設定
 			cameraData->worldPosition = cameraTransform.translate;
@@ -1794,7 +1795,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
 			// wvp用のCBufferの場所を設定
-			commandList->SetGraphicsRootConstantBufferView(1, TtransformationMatrixResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
 
 			//描画！(DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
 			commandList->DrawInstanced(1, 1, 0, 0);

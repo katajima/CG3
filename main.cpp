@@ -469,7 +469,7 @@ ModelData LoadOdjFile(const std::string& directoryPath, const std::string& filen
 		}
 	}
 
-	
+
 
 	return modelData;
 };
@@ -1696,6 +1696,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	materialData->enableLighting = true;
+
+
+
+	bool isObj = true;
+	bool isShpar = true;
+	bool isdirectionalLight = true;
+	bool ispointLight = true;
+	bool isSpotLight = true;
+
 	MSG msg{};
 	//ウィンドウの×ボタンが押されるまでループ
 	while (msg.message != WM_QUIT) {
@@ -1716,32 +1725,46 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::DragFloat3("camera.translate.x", &cameraTransform.translate.x, 0.1f);
 			ImGui::SliderFloat3("camera.rotate", &cameraTransform.rotate.x, -3.14f, 3.14f);
 			ImGui::DragInt("enableLighting", &materialData->enableLighting);
-			ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
-			ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
-			directionalLightData->direction = Nomalize(directionalLightData->direction);
-			ImGui::DragFloat3("pointLightData Position", &pointLightData->position.x, 0.1f);
-			ImGui::DragFloat("pointLightData Intensity", &pointLightData->intensity, 0.01f);
-			ImGui::DragFloat("pointLightData Radius", &pointLightData->radius, 0.01f);
-			ImGui::DragFloat("pointLightData Decay", &pointLightData->decay, 0.01f);
-			ImGui::DragFloat3("spotLightData Position", &spotLightData->position.x, 0.1f);
-			ImGui::DragFloat3("spotLightData Direction", &spotLightData->direction.x, 0.1f);
-			spotLightData->direction = Nomalize(spotLightData->direction);
-			ImGui::DragFloat("spotLightData Intensity", &spotLightData->intensity, 0.01f);
-			ImGui::DragFloat("spotLightData Distance", &spotLightData->distance, 0.01f);
-			ImGui::DragFloat("spotLightData Decay", &spotLightData->decay, 0.01f);
-			ImGui::DragFloat("spotLightData cosAngle", &spotLightData->cosAngle, 0.01f);
-			ImGui::DragFloat("spotLightData cosFalloffStart", &spotLightData->cosFalloffStart, 0.01f);
 
+			if (ImGui::CollapsingHeader("Shpar", isShpar)) {
+				ImGui::DragFloat3("translate", &transformSphar.translate.x, 0.01f);
+				ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
+				ImGui::DragFloat3("Rotate", &transformSphar.rotate.x, 0.1f);
+			}
+
+			if (ImGui::CollapsingHeader("Obj", isObj)) {
+				ImGui::DragFloat3("translateObj ", &transform.translate.x, 0.1f);
+				ImGui::DragFloat3("scaleObj ", &transform.scale.x, 0.1f);
+				ImGui::DragFloat3("rotateObj", &transform.rotate.x, 0.1f);
+			}
+
+			if (ImGui::CollapsingHeader("DirectionalLight", isdirectionalLight)) {
+				ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x);
+				ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
+				directionalLightData->direction = Nomalize(directionalLightData->direction);
+			}
+
+			if (ImGui::CollapsingHeader("PointLight", ispointLight)) {
+				ImGui::DragFloat3("pointLightData Position", &pointLightData->position.x, 0.1f);
+				ImGui::DragFloat("pointLightData Intensity", &pointLightData->intensity, 0.01f);
+				ImGui::DragFloat("pointLightData Radius", &pointLightData->radius, 0.01f);
+				ImGui::DragFloat("pointLightData Decay", &pointLightData->decay, 0.01f);
+			}
+
+			if (ImGui::CollapsingHeader("SpotLight", isSpotLight)) {
+				ImGui::DragFloat3("spotLightData Position", &spotLightData->position.x, 0.1f);
+				ImGui::DragFloat3("spotLightData Direction", &spotLightData->direction.x, 0.1f);
+				spotLightData->direction = Nomalize(spotLightData->direction);
+				ImGui::DragFloat("spotLightData Intensity", &spotLightData->intensity, 0.01f);
+				ImGui::DragFloat("spotLightData Distance", &spotLightData->distance, 0.01f);
+				ImGui::DragFloat("spotLightData Decay", &spotLightData->decay, 0.01f);
+				ImGui::DragFloat("spotLightData cosAngle", &spotLightData->cosAngle, 0.01f);
+				ImGui::DragFloat("spotLightData cosFalloffStart", &spotLightData->cosFalloffStart, 0.01f);
+			}
 
 
 			ImGui::ColorEdit4("color", &materialData->color.x);
 			ImGui::DragFloat("shininess", &materialData->shininess, 0.01f);
-			//ImGui::DragFloat3("Translate", &transformSphar.translate.x, 0.01f);
-			//ImGui::DragFloat3("Scale", &transformSphar.scale.x, 0.1f);
-			//ImGui::DragFloat3("Rotate", &transformSphar.rotate.x ,0.1f);
-			//ImGui::DragFloat3("TranslateObj ", &transform.translate.x ,0.1f);
-			//ImGui::DragFloat3("Ttransform ", &Ttransform.translate.x ,0.1f);
-			//ImGui::DragFloat3("RotateObj", &transform.rotate.x ,0.1f);
 			//ImGui::DragFloat2("UVTranslate", &uvTransformSphar.translate.x, 0.01f, -10.0f, 10.0f);
 			//ImGui::DragFloat2("UVSScale", &uvTransformSphar.scale.x, 0.1f, -10.0f, 10.0f);
 			//ImGui::SliderAngle("UVRotate", &uvTransformSphar.rotate.z);

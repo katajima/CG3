@@ -1458,7 +1458,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 	//モデル読み込み
-	ModelData modeldata = LoadModelFile("./resources", "plane.gltf");
+	ModelData modeldata = LoadModelFile("./resources", "terrain.obj");
 
 	//頂点リソースを作る
 	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResourceObj = CreateBufferResource(device, sizeof(VertexData) * modeldata.vertices.size());

@@ -22,7 +22,7 @@ void main(
         element.svpos = input[i].position + float4(20.0f, 0.0f, 0.0f, 0.0f);
         element.normal = input[i].nomal;
         element.uv = input[i].texcoord * 5.0f;
-        element.worldPosition = input[i].worldPosition;
+        element.worldPosition = input[i].worldPosition + float3(20.0f, 0.0f, 0.0f);
         output.Append(element);
         
     }

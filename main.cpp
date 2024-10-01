@@ -1567,14 +1567,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
 
 			// パラメータ[1]がディスクリプタテーブルでないことを確認し、適切に設定する
-			commandList->SetGraphicsRootConstantBufferView(0, instancingResource->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(0, instancingResource->GetGPUVirtualAddress());
 
 			for (int i = 0; i < 10; i++) {
 				// パラメータ[1]はディスクリプタテーブルとして設定されているため、SetGraphicsRootDescriptorTableを使用
 				commandList->SetGraphicsRootDescriptorTable(1, instancingSrvHandleGPU);
 
 				// ルートCBVを設定する場合、パラメータ[0]を使用
-				commandList->SetGraphicsRootConstantBufferView(0, materialResourceObj->GetGPUVirtualAddress());
+				//commandList->SetGraphicsRootConstantBufferView(0, materialResourceObj->GetGPUVirtualAddress());
 
 				// VertexBufferViewの設定
 				commandList->IASetVertexBuffers(0, 1, &vertexBufferViewObj);

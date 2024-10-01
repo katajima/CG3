@@ -1295,12 +1295,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	vertexData[0] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { vertexData[0].position.x, vertexData[0].position.y, vertexData[0].position.z}};
-	//vertexData[1] = { { 1.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } };
-	//vertexData[2] = { { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } };
-	//vertexData[3] = { { 1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f } };
-	//vertexData[4] = { { 1.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 1.0f } };
-	//vertexData[5] = { { 0.0f, 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } };
-
+	//vertexData[0] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { 0, 0, 0}};
+	
 
 #pragma endregion //三角形
 
